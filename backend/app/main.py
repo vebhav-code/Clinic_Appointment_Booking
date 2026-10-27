@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.errors import register_error_handlers
-from app.routers import appointments, auth, doctor_management, doctors
+from app.routers import appointments, auth, doctor_management, doctors, reminders
 
 
 @asynccontextmanager
@@ -43,6 +43,7 @@ api_v1_router.include_router(auth.router)
 api_v1_router.include_router(doctors.router)
 api_v1_router.include_router(doctor_management.router)
 api_v1_router.include_router(appointments.router)
+api_v1_router.include_router(reminders.router)
 
 # Include in main app
 app.include_router(api_v1_router)
