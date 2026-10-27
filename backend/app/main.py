@@ -1,12 +1,13 @@
-"""FastAPI application entrypoint with health check, CORS, and lifecycle handling."""
+"""FastAPI application entrypoint with health check, CORS, routers, and exception handlers."""
 
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from app.core.config import settings
+from app.core.errors import register_error_handlers
+from app.routers import auth
 
 
 @asynccontextmanager
@@ -23,6 +24,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Register centralized standard error handlers
+register_error_handlers(app)
+
 # CORS Configuration
 origins = [origin.strip() for origin in settings.FRONTEND_ORIGIN.split(",") if origin.strip()]
 app.add_middleware(
@@ -32,6 +36,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# API v1 Router
+api_v1_router = APIRouter(prefix="/api/v1")
+api_v1_router.include_router(auth.router)
+
+# Include in main app
+app.include_router(api_v1_router)
 
 
 @app.get("/health", tags=["Health"])
@@ -52,4 +63,5 @@ def root():
         "message": "Welcome to Clinic Appointment Booking API",
         "docs": "/docs",
         "health": "/health",
+        "api_v1": "/api/v1",
     }
