@@ -1,10 +1,10 @@
 """Patient appointment endpoints: booking, cancellation, rescheduling, and history."""
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import require_patient
+from app.core.security import get_current_user, require_patient
 from app.models.user import User
 from app.schemas.appointment import (
     AppointmentResponse,
@@ -13,7 +13,7 @@ from app.schemas.appointment import (
 )
 from app.services import appointment_service
 
-router = APIRouter(prefix="/appointments", tags=["Appointments (Patient)"])
+router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
 
 @router.post(
@@ -96,3 +96,25 @@ def reschedule(
         new_start_at=payload.new_start_at,
         reason=payload.reason,
     )
+
+
+@router.get(
+    "/{appointment_id}/ics",
+    summary="Download RFC 5545 iCalendar (.ics) file for an appointment",
+    response_class=Response,
+)
+def download_appointment_ics(
+    appointment_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Generate and download iCalendar (.ics) event for importing into Apple/Google/Outlook Calendar."""
+    ics_text = appointment_service.generate_appointment_ics(db, appointment_id, current_user.id)
+    return Response(
+        content=ics_text,
+        media_type="text/calendar; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="appointment-{appointment_id}.ics"',
+        },
+    )
+

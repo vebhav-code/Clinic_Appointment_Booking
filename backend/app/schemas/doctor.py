@@ -6,6 +6,15 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+class GeneratedSlotItem(BaseModel):
+    """Slot item returned to client."""
+
+    start_at: datetime
+    end_at: datetime
+    local_start: str
+    local_end: str
+
+
 class DoctorListItem(BaseModel):
     """Doctor summary for directory listing."""
 
@@ -17,9 +26,13 @@ class DoctorListItem(BaseModel):
     phone: str | None = None
     speciality: str
     bio: str | None = None
+    qualifications: str | None = None
+    years_of_experience: int | None = None
+    languages: list[str] = Field(default_factory=list)
     slot_minutes: int
     consultation_fee: Decimal | None = None
     is_active: bool
+    next_available_slot: GeneratedSlotItem | None = None
 
 
 class AvailabilityRuleItem(BaseModel):
@@ -102,14 +115,6 @@ class DoctorLeaveResponse(BaseModel):
     date: date
     reason: str | None = None
 
-
-class GeneratedSlotItem(BaseModel):
-    """Slot item returned to client."""
-
-    start_at: datetime
-    end_at: datetime
-    local_start: str
-    local_end: str
 
 
 class SlotsResponse(BaseModel):

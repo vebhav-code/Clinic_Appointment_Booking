@@ -57,6 +57,7 @@ class AppointmentResponse(BaseModel):
     end_at: datetime
     status: str
     reason: str | None = None
+    patient_notes: str | None = None
     created_at: datetime
     cancelled_at: datetime | None = None
     can_cancel_or_reschedule: bool = False

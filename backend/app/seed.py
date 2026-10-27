@@ -4,7 +4,7 @@ Run via:
     python -m app.seed
 """
 
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -24,7 +24,11 @@ DOCTORS_SEED = [
         "full_name": "Dr. Arvind Sharma",
         "phone": "+91 98201 11223",
         "speciality": "General Physician",
-        "bio": "Senior family physician with 18+ years of experience in preventive medicine and chronic care management.",
+        "bio": "Senior family physician with 18+ years of experience in preventive medicine, routine wellness, and chronic illness management.",
+        "qualifications": "MBBS, MD (General Medicine), FACP",
+        "years_of_experience": 18,
+        "languages": ["English", "Hindi", "Punjabi"],
+        "avatar_color": "#0E9AA7",
         "slot_minutes": 15,
         "consultation_fee": 400.00,
         "days": [0, 1, 2, 3, 4, 5],  # Mon - Sat
@@ -36,6 +40,10 @@ DOCTORS_SEED = [
         "phone": "+91 98202 22334",
         "speciality": "Dermatologist",
         "bio": "Consultant dermatologist specialising in clinical dermatology, laser aesthetics, and pediatric skin care.",
+        "qualifications": "MBBS, MD (Dermatology, Venereology & Leprosy)",
+        "years_of_experience": 12,
+        "languages": ["English", "Hindi", "Malayalam", "Tamil"],
+        "avatar_color": "#8B7FE8",
         "slot_minutes": 30,
         "consultation_fee": 650.00,
         "days": [0, 1, 2, 3, 4],  # Mon - Fri
@@ -47,6 +55,10 @@ DOCTORS_SEED = [
         "phone": "+91 98203 33445",
         "speciality": "Cardiologist",
         "bio": "Interventional cardiologist and researcher with expertise in hypertension, lipidology, and cardiovascular rehabilitation.",
+        "qualifications": "MBBS, MD, DM (Cardiology), FACC",
+        "years_of_experience": 22,
+        "languages": ["English", "Hindi", "Gujarati", "Marathi"],
+        "avatar_color": "#FF8A5B",
         "slot_minutes": 30,
         "consultation_fee": 900.00,
         "days": [0, 1, 2, 3, 4, 5],  # Mon - Sat
@@ -58,6 +70,10 @@ DOCTORS_SEED = [
         "phone": "+91 98204 44556",
         "speciality": "Pediatrician",
         "bio": "Dedicated child specialist focusing on neonatal care, adolescent health, and developmental pediatrics.",
+        "qualifications": "MBBS, DCH, DNB (Pediatrics)",
+        "years_of_experience": 9,
+        "languages": ["English", "Hindi", "Gujarati"],
+        "avatar_color": "#2FB67C",
         "slot_minutes": 30,
         "consultation_fee": 500.00,
         "days": [1, 2, 3, 4, 5, 6],  # Tue - Sun
@@ -70,16 +86,34 @@ PATIENTS_SEED = [
         "email": "rohan.patient@example.com",
         "full_name": "Rohan Verma",
         "phone": "+91 97111 00111",
+        "date_of_birth": date(1992, 5, 14),
+        "gender": "male",
+        "emergency_contact_name": "Kavita Verma (Spouse)",
+        "emergency_contact_phone": "+91 97111 00999",
+        "patient_notes": "Mild seasonal allergic rhinitis. Penicillin sensitive. Prefers morning appointments.",
+        "avatar_color": "#0E9AA7",
     },
     {
         "email": "ananya.patient@example.com",
         "full_name": "Ananya Iyer",
         "phone": "+91 97112 00222",
+        "date_of_birth": date(1996, 9, 21),
+        "gender": "female",
+        "emergency_contact_name": "Sunil Iyer (Father)",
+        "emergency_contact_phone": "+91 97112 00888",
+        "patient_notes": "Annual dermatology checkup history.",
+        "avatar_color": "#8B7FE8",
     },
     {
         "email": "vikram.patient@example.com",
         "full_name": "Vikram Malhotra",
         "phone": "+91 97113 00333",
+        "date_of_birth": date(1988, 11, 3),
+        "gender": "male",
+        "emergency_contact_name": "Pooja Malhotra (Sister)",
+        "emergency_contact_phone": "+91 97113 00777",
+        "patient_notes": None,
+        "avatar_color": "#FF8A5B",
     },
 ]
 
@@ -99,10 +133,13 @@ def seed_database(db: Session) -> None:
                 full_name=doc_data["full_name"],
                 role=UserRole.DOCTOR.value,
                 phone=doc_data["phone"],
+                avatar_color=doc_data.get("avatar_color", "#0E9AA7"),
             )
             db.add(doc)
             db.flush()
             print(f"  + Created Doctor: {doc.full_name} ({doc.email})")
+        else:
+            doc.avatar_color = doc_data.get("avatar_color", "#0E9AA7")
 
         created_doctors[doc.email] = doc
 
@@ -113,11 +150,20 @@ def seed_database(db: Session) -> None:
                 user_id=doc.id,
                 speciality=doc_data["speciality"],
                 bio=doc_data["bio"],
+                qualifications=doc_data.get("qualifications"),
+                years_of_experience=doc_data.get("years_of_experience"),
+                languages=doc_data.get("languages", []),
                 slot_minutes=doc_data["slot_minutes"],
                 consultation_fee=doc_data["consultation_fee"],
                 is_active=True,
             )
             db.add(profile)
+        else:
+            profile.qualifications = doc_data.get("qualifications")
+            profile.years_of_experience = doc_data.get("years_of_experience")
+            profile.languages = doc_data.get("languages", [])
+            profile.bio = doc_data["bio"]
+            profile.consultation_fee = doc_data["consultation_fee"]
             db.flush()
 
         # Rules
@@ -148,10 +194,24 @@ def seed_database(db: Session) -> None:
                 full_name=pat_data["full_name"],
                 role=UserRole.PATIENT.value,
                 phone=pat_data["phone"],
+                date_of_birth=pat_data.get("date_of_birth"),
+                gender=pat_data.get("gender"),
+                emergency_contact_name=pat_data.get("emergency_contact_name"),
+                emergency_contact_phone=pat_data.get("emergency_contact_phone"),
+                patient_notes=pat_data.get("patient_notes"),
+                avatar_color=pat_data.get("avatar_color", "#0E9AA7"),
             )
             db.add(pat)
             db.flush()
             print(f"  + Created Patient: {pat.full_name} ({pat.email})")
+        else:
+            pat.date_of_birth = pat_data.get("date_of_birth")
+            pat.gender = pat_data.get("gender")
+            pat.emergency_contact_name = pat_data.get("emergency_contact_name")
+            pat.emergency_contact_phone = pat_data.get("emergency_contact_phone")
+            pat.patient_notes = pat_data.get("patient_notes")
+            pat.avatar_color = pat_data.get("avatar_color", "#0E9AA7")
+
         created_patients[pat_data["email"]] = pat
 
     db.commit()

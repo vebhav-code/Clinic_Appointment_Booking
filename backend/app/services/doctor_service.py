@@ -1,6 +1,6 @@
 """Doctor management, availability rules, leaves, and slots service."""
 
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -52,6 +52,7 @@ def get_all_doctors(
 
     items: list[DoctorListItem] = []
     for user, profile in results:
+        next_slot = find_doctor_next_available_slot(db, user.id, max_days_ahead=14)
         items.append(
             DoctorListItem(
                 id=user.id,
@@ -60,12 +61,35 @@ def get_all_doctors(
                 phone=user.phone,
                 speciality=profile.speciality,
                 bio=profile.bio,
+                qualifications=profile.qualifications,
+                years_of_experience=profile.years_of_experience,
+                languages=profile.languages or [],
                 slot_minutes=profile.slot_minutes,
                 consultation_fee=profile.consultation_fee,
                 is_active=profile.is_active,
+                next_available_slot=next_slot,
             )
         )
     return items
+
+
+def find_doctor_next_available_slot(
+    db: Session,
+    doctor_id: int,
+    max_days_ahead: int = 14,
+    now_utc: datetime | None = None,
+) -> GeneratedSlotItem | None:
+    """Find the earliest available free slot for a doctor within max_days_ahead."""
+    if now_utc is None:
+        now_utc = datetime.now(timezone.utc)
+
+    start_date = now_utc.astimezone(settings.tz).date()
+    for day_offset in range(max_days_ahead + 1):
+        target_date = start_date + timedelta(days=day_offset)
+        slots_resp = get_doctor_slots_for_date(db, doctor_id, target_date, now_utc=now_utc)
+        if slots_resp.slots:
+            return slots_resp.slots[0]
+    return None
 
 
 def get_doctor_details(db: Session, doctor_id: int) -> DoctorDetailResponse:
@@ -88,6 +112,8 @@ def get_doctor_details(db: Session, doctor_id: int) -> DoctorDetailResponse:
         .order_by(AvailabilityRule.weekday, AvailabilityRule.start_time)
     ).all()
 
+    next_slot = find_doctor_next_available_slot(db, doctor_id, max_days_ahead=14)
+
     return DoctorDetailResponse(
         id=user.id,
         full_name=user.full_name,
@@ -95,9 +121,13 @@ def get_doctor_details(db: Session, doctor_id: int) -> DoctorDetailResponse:
         phone=user.phone,
         speciality=profile.speciality,
         bio=profile.bio,
+        qualifications=profile.qualifications,
+        years_of_experience=profile.years_of_experience,
+        languages=profile.languages or [],
         slot_minutes=profile.slot_minutes,
         consultation_fee=profile.consultation_fee,
         is_active=profile.is_active,
+        next_available_slot=next_slot,
         availability_rules=list(rules),
     )
 

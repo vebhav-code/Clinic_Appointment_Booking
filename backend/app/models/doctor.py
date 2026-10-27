@@ -4,6 +4,7 @@ from datetime import date, time
 from decimal import Decimal
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     Date,
@@ -26,6 +27,10 @@ class DoctorProfile(Base):
     __tablename__ = "doctor_profiles"
     __table_args__ = (
         CheckConstraint("slot_minutes IN (15, 30)", name="check_slot_minutes"),
+        CheckConstraint(
+            "years_of_experience IS NULL OR (years_of_experience >= 0 AND years_of_experience <= 70)",
+            name="check_years_of_experience",
+        ),
     )
 
     user_id: Mapped[int] = mapped_column(
@@ -35,6 +40,9 @@ class DoctorProfile(Base):
     )
     speciality: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    qualifications: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    years_of_experience: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    languages: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, default=list)
     slot_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
     consultation_fee: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

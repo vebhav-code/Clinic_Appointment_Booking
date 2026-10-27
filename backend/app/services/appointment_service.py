@@ -47,6 +47,7 @@ def _to_appointment_response(appt: Appointment, now_utc: datetime) -> Appointmen
         end_at=appt.end_at,
         status=appt.status,
         reason=appt.reason,
+        patient_notes=appt.patient.patient_notes if appt.patient else None,
         created_at=appt.created_at,
         cancelled_at=appt.cancelled_at,
         can_cancel_or_reschedule=can_modify,
@@ -509,3 +510,62 @@ def get_doctor_appointments_for_date(
     ).all()
 
     return [_to_appointment_response(a, now_utc) for a in results]
+
+
+def generate_appointment_ics(db: Session, appointment_id: int, user_id: int) -> str:
+    """Generate RFC 5545 iCalendar content for an appointment, ensuring ownership."""
+    appt = db.scalar(
+        select(Appointment)
+        .options(
+            joinedload(Appointment.patient),
+            joinedload(Appointment.doctor).joinedload(User.doctor_profile),
+        )
+        .where(Appointment.id == appointment_id)
+    )
+    if not appt:
+        raise AppError(
+            status_code=404,
+            code="APPOINTMENT_NOT_FOUND",
+            message=f"Appointment {appointment_id} does not exist.",
+        )
+
+    # Patient or doctor of the appointment can download calendar file
+    if appt.patient_id != user_id and appt.doctor_id != user_id:
+        raise AppError(
+            status_code=403,
+            code="FORBIDDEN_CALENDAR_ACCESS",
+            message="You can only download calendar files for your own appointments.",
+        )
+
+    now_utc_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    start_str = appt.start_at.strftime("%Y%m%dT%H%M%SZ")
+    end_str = appt.end_at.strftime("%Y%m%dT%H%M%SZ")
+    doctor_name = appt.doctor.full_name if appt.doctor else "Doctor"
+    speciality = (
+        appt.doctor.doctor_profile.speciality
+        if appt.doctor and appt.doctor.doctor_profile
+        else "General Consultation"
+    )
+    patient_name = appt.patient.full_name if appt.patient else "Patient"
+    reason = appt.reason or "Clinical Consultation"
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//PulseClinic//Clinic Appointment Booking//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "BEGIN:VEVENT",
+        f"UID:pulseclinic-appt-{appt.id}@pulseclinic.internal",
+        f"DTSTAMP:{now_utc_str}",
+        f"DTSTART:{start_str}",
+        f"DTEND:{end_str}",
+        f"SUMMARY:Appointment with {doctor_name} ({speciality})",
+        f"DESCRIPTION:Patient: {patient_name}. Doctor: {doctor_name}. Reason: {reason}.",
+        "LOCATION:PulseClinic Medical Centre",
+        "STATUS:CONFIRMED",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ]
+    return "\r\n".join(lines) + "\r\n"
+
