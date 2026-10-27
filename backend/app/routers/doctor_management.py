@@ -1,21 +1,23 @@
-"""Doctor-only endpoints for managing availability schedule and leaves."""
+"""Doctor-only endpoints for managing availability schedule, leaves, and appointments."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import require_doctor
 from app.models.doctor import DoctorLeave
 from app.models.user import User
+from app.schemas.appointment import AppointmentResponse, UpdateAppointmentStatusRequest
 from app.schemas.doctor import (
     DoctorDetailResponse,
     DoctorLeaveCreateRequest,
     DoctorLeaveResponse,
     UpdateDoctorAvailabilityRequest,
 )
-from app.services import doctor_service
+from app.services import appointment_service, doctor_service
 
 router = APIRouter(prefix="/doctor", tags=["Doctor Management"])
 
@@ -100,3 +102,59 @@ def delete_leave_date(
     """Remove a previously blocked leave date, restoring normal weekly availability."""
     doctor_service.unblock_doctor_leave_date(db, current_doctor.id, date)
     return {"message": f"Leave date {date} removed successfully."}
+
+
+@router.get(
+    "/appointments/today",
+    response_model=list[AppointmentResponse],
+    summary="Get today's schedule of appointments for logged-in doctor",
+)
+def get_today_appointments(
+    current_doctor: User = Depends(require_doctor),
+    db: Session = Depends(get_db),
+):
+    """Retrieve all appointments scheduled for today in the clinic's local timezone."""
+    today_clinic = datetime.now(timezone.utc).astimezone(settings.tz).date()
+    return appointment_service.get_doctor_appointments_for_date(
+        db=db,
+        doctor_id=current_doctor.id,
+        target_date=today_clinic,
+    )
+
+
+@router.get(
+    "/appointments",
+    response_model=list[AppointmentResponse],
+    summary="Get doctor appointments filtered by date",
+)
+def get_appointments_by_date(
+    date: date = Query(..., description="Target date in YYYY-MM-DD format"),
+    current_doctor: User = Depends(require_doctor),
+    db: Session = Depends(get_db),
+):
+    """Retrieve all appointments scheduled for a specific date for logged-in doctor."""
+    return appointment_service.get_doctor_appointments_for_date(
+        db=db,
+        doctor_id=current_doctor.id,
+        target_date=date,
+    )
+
+
+@router.patch(
+    "/appointments/{appointment_id}/status",
+    response_model=AppointmentResponse,
+    summary="Mark appointment as completed or no_show",
+)
+def update_status(
+    appointment_id: int,
+    payload: UpdateAppointmentStatusRequest,
+    current_doctor: User = Depends(require_doctor),
+    db: Session = Depends(get_db),
+):
+    """Doctor marks an appointment as completed or no_show. Rejected if future appointment."""
+    return appointment_service.update_doctor_appointment_status(
+        db=db,
+        appointment_id=appointment_id,
+        doctor_id=current_doctor.id,
+        new_status=payload.status,
+    )

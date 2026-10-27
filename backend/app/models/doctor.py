@@ -14,7 +14,7 @@ from sqlalchemy import (
     Time,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, foreign, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -42,12 +42,14 @@ class DoctorProfile(Base):
     user: Mapped["User"] = relationship("User", back_populates="doctor_profile")  # noqa: F821
     availability_rules: Mapped[list["AvailabilityRule"]] = relationship(
         "AvailabilityRule",
+        primaryjoin="DoctorProfile.user_id == foreign(AvailabilityRule.doctor_id)",
         back_populates="doctor",
         cascade="all, delete-orphan",
         order_by="AvailabilityRule.weekday, AvailabilityRule.start_time",
     )
     leaves: Mapped[list["DoctorLeave"]] = relationship(
         "DoctorLeave",
+        primaryjoin="DoctorProfile.user_id == foreign(DoctorLeave.doctor_id)",
         back_populates="doctor",
         cascade="all, delete-orphan",
         order_by="DoctorLeave.date",
@@ -76,8 +78,8 @@ class AvailabilityRule(Base):
 
     doctor: Mapped["DoctorProfile"] = relationship(
         "DoctorProfile",
+        primaryjoin="foreign(AvailabilityRule.doctor_id) == DoctorProfile.user_id",
         back_populates="availability_rules",
-        foreign_keys=[doctor_id],
     )
 
 
@@ -101,6 +103,6 @@ class DoctorLeave(Base):
 
     doctor: Mapped["DoctorProfile"] = relationship(
         "DoctorProfile",
+        primaryjoin="foreign(DoctorLeave.doctor_id) == DoctorProfile.user_id",
         back_populates="leaves",
-        foreign_keys=[doctor_id],
     )
