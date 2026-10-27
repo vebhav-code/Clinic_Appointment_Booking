@@ -2,9 +2,10 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session

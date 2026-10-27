@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from sqlalchemy import engine_from_config, pool
+
 from alembic import context
 
 # Ensure backend root is on sys.path
@@ -10,9 +11,9 @@ backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+import app.models  # noqa: F401 - Ensure all models are imported for metadata reflection
 from app.core.config import settings
 from app.core.database import Base
-import app.models  # noqa: F401 - Ensure all models are imported for metadata reflection
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

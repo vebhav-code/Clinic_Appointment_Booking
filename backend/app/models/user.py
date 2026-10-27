@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
+
 from sqlalchemy import CheckConstraint, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

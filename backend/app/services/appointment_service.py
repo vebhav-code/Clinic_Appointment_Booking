@@ -1,6 +1,7 @@
 """Appointment management service: transactional booking, atomic reschedule, cancel, and status updates."""
 
 from datetime import date, datetime, time, timedelta, timezone
+
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.config import settings
 from app.core.errors import AppError
 from app.models.appointment import Appointment, AppointmentStatus
-from app.models.doctor import AvailabilityRule, DoctorProfile
+from app.models.doctor import AvailabilityRule
 from app.models.user import User, UserRole
 from app.schemas.appointment import AppointmentResponse
 from app.services.doctor_service import get_doctor_slots_for_date

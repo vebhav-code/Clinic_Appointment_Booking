@@ -2,6 +2,7 @@
 
 from datetime import date, datetime, time, timezone
 from zoneinfo import ZoneInfo
+
 import pytest
 
 from app.core.errors import AppError

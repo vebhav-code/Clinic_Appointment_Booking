@@ -4,9 +4,10 @@ import sys
 from collections.abc import Generator
 from datetime import time
 from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 # Add backend directory to sys.path

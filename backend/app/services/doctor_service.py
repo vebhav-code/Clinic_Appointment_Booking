@@ -1,6 +1,7 @@
 """Doctor management, availability rules, leaves, and slots service."""
 
 from datetime import date, datetime, time, timezone
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 

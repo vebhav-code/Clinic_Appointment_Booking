@@ -1,6 +1,7 @@
 """Doctor-only endpoints for managing availability schedule, leaves, and appointments."""
 
 from datetime import date, datetime, timezone
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session

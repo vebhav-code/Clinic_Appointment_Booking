@@ -2,6 +2,7 @@
 
 from datetime import date, time
 from decimal import Decimal
+
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -14,7 +15,7 @@ from sqlalchemy import (
     Time,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, foreign, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 

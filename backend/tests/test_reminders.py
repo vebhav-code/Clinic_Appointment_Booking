@@ -1,13 +1,13 @@
 """Tests for in-app reminders endpoint."""
 
 from datetime import datetime, timedelta, timezone
-from freezegun import freeze_time
+
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.core.security import create_access_token
-from app.models.appointment import Appointment, AppointmentStatus, Reminder
+from app.models.appointment import Appointment, AppointmentStatus
 
 
 def test_reminders_due_within_one_hour(client: TestClient, seed_test_data: dict, db: Session):

@@ -4,15 +4,15 @@ Run via:
     python -m app.seed
 """
 
-from datetime import date, datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
+from datetime import datetime, time, timedelta, timezone
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
-from app.models.appointment import Appointment, AppointmentStatus, Reminder
+from app.models.appointment import Appointment, AppointmentStatus
 from app.models.doctor import AvailabilityRule, DoctorLeave, DoctorProfile
 from app.models.user import User, UserRole
 

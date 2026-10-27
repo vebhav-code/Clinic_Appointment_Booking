@@ -1,6 +1,7 @@
 """Application configuration and environment settings."""
 
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

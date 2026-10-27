@@ -12,10 +12,10 @@ Verifies:
 """
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
-from freezegun import freeze_time
+from datetime import datetime, timedelta, timezone
+
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 

@@ -1,6 +1,7 @@
 """Public doctor directory and slot exploration endpoints (accessible to authenticated users)."""
 
 from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
