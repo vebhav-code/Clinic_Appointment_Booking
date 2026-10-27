@@ -11,6 +11,11 @@ A production-quality full-stack clinic appointment booking system designed for h
 
 *(Note: On Render free tier web services, the backend may sleep after inactivity; please allow 30-50 seconds for initial spin-up).*
 
+### 📱 Interface Preview
+| Patient Booking Experience | Doctor Schedule & Availability |
+| :---: | :---: |
+| ![Patient Flow](https://placehold.co/600x400/000000/FFFFFF/png?text=PulseClinic+Patient+Slot+Booking) | ![Doctor Flow](https://placehold.co/600x400/000000/FFFFFF/png?text=Doctor+Schedule+Manager) |
+
 ---
 
 ## 🔑 Demo Logins Table
@@ -222,6 +227,49 @@ All endpoints are versioned under `/api/v1`:
 - **Typography:** Display face `Space Grotesk` paired with `JetBrains Mono` for times, dates, and metadata badges.
 - **Micro-Interactions:** Magnetic hover buttons, animated slot selection inverting to black with spring physics, marquee banner of clinical specialities, and status badges using pattern + text.
 - **Mobile-First:** Bottom navigation bar on mobile viewports (<640px), touch targets >= 44px, reflowing responsive slot grid, and full accessibility (ARIA, keyboard navigation, AA contrast).
+
+---
+
+## 📋 What is Finished, What is Not, and What I Would Do With More Time
+
+### ✅ What is Finished & Verified (100% Core Requirements)
+1. **Zero Double-Booking Concurrency Engine**:
+   - PostgreSQL `btree_gist` extension with `EXCLUDE USING gist (doctor_id WITH =, tstzrange(start_at, end_at) WITH &&)`.
+   - Single-transaction isolation with rollback and user-friendly HTTP 409 Conflict handling.
+   - Tested under high concurrency with 10 simultaneous threads racing for the identical millisecond slot.
+2. **Pure Deterministic Slot Generation**:
+   - Cut recurring weekly availability windows into exact 15 or 30-minute slots in clinic timezone (`Asia/Kolkata`).
+   - Partial trailing slot dropped when window length is not an exact multiple.
+   - Past slots suppressed (`start_at <= now`).
+   - Doctor leaves suppress all slots for that date.
+   - Server-side slot verification on booking rejects any misaligned or synthetic times.
+3. **Cancellation & Rescheduling Policies**:
+   - 2-hour cutoff rule strictly enforced on server with HTTP 422/403.
+   - Rescheduling is 100% atomic in a single database transaction (cancel old + book new or roll back together).
+4. **Strict Role & Permission Enforcement**:
+   - JWT authentication with argon2/bcrypt password hashing.
+   - Patient endpoints guarded from doctors; doctor endpoints guarded from patients.
+   - Ownership validation ensuring patients can only view/cancel their own appointments.
+5. **Real PostgreSQL Pytest Suite**:
+   - 18 passing tests covering all concurrency, time-freezing, role security, status transitions, and slot math.
+6. **Idempotent Data Seeding**:
+   - 4 diverse doctors across general medicine, dermatology, cardiology, and pediatrics.
+   - Pre-populated leaves, past visits, and upcoming appointments.
+7. **Free-Tier Friendly In-App Reminders**:
+   - On-demand calculation of 1-hour pre-visit reminders without background workers, with 60s frontend polling and bell badge.
+8. **Minimalist Kinetic Monochrome UI**:
+   - Built with React, Vite, React Router, and Framer Motion with CSS variables.
+   - Space Grotesk + JetBrains Mono typography, magnetic buttons, animated slot selection, and mobile bottom navigation.
+
+### ⏳ What is Not Included
+- **External SMS / WhatsApp Alerts**: In-app reminder notifications are fully functional; third-party Twilio/SMS integrations were not part of the initial specification.
+- **Payment Processing**: Consultation fees are stored in doctor profiles, but payment gateway checkout (Stripe/Razorpay) was omitted.
+
+### 🔮 What I Would Do With More Time
+- **WebSockets / Server-Sent Events (SSE)**: Real-time slot locking and calendar updates without waiting for polling intervals.
+- **Bi-weekly / Rotational Availability**: Support alternating weekly schedules (e.g. 1st and 3rd Saturdays off).
+- **Calendar Integrations**: One-click "Add to Google Calendar" and iCal (`.ics`) file exports.
+- **End-to-End Playwright Suite**: Browser automation tests simulating mobile and desktop booking flows in CI/CD.
 
 ---
 
