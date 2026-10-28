@@ -25,39 +25,47 @@ def get_user_profile(db: Session, user: User) -> ProfileResponse:
 
     # Calculate stats depending on role
     if user.role == UserRole.PATIENT.value:
-        total = db.scalar(
-            select(func.count(Appointment.id)).where(Appointment.patient_id == user.id)
-        ) or 0
-        upcoming = db.scalar(
-            select(func.count(Appointment.id)).where(
-                Appointment.patient_id == user.id,
-                Appointment.status == AppointmentStatus.BOOKED.value,
-                Appointment.end_at >= now_utc,
+        total = db.scalar(select(func.count(Appointment.id)).where(Appointment.patient_id == user.id)) or 0
+        upcoming = (
+            db.scalar(
+                select(func.count(Appointment.id)).where(
+                    Appointment.patient_id == user.id,
+                    Appointment.status == AppointmentStatus.BOOKED.value,
+                    Appointment.end_at >= now_utc,
+                )
             )
-        ) or 0
-        completed = db.scalar(
-            select(func.count(Appointment.id)).where(
-                Appointment.patient_id == user.id,
-                Appointment.status == AppointmentStatus.COMPLETED.value,
+            or 0
+        )
+        completed = (
+            db.scalar(
+                select(func.count(Appointment.id)).where(
+                    Appointment.patient_id == user.id,
+                    Appointment.status == AppointmentStatus.COMPLETED.value,
+                )
             )
-        ) or 0
+            or 0
+        )
     else:
-        total = db.scalar(
-            select(func.count(Appointment.id)).where(Appointment.doctor_id == user.id)
-        ) or 0
-        upcoming = db.scalar(
-            select(func.count(Appointment.id)).where(
-                Appointment.doctor_id == user.id,
-                Appointment.status == AppointmentStatus.BOOKED.value,
-                Appointment.end_at >= now_utc,
+        total = db.scalar(select(func.count(Appointment.id)).where(Appointment.doctor_id == user.id)) or 0
+        upcoming = (
+            db.scalar(
+                select(func.count(Appointment.id)).where(
+                    Appointment.doctor_id == user.id,
+                    Appointment.status == AppointmentStatus.BOOKED.value,
+                    Appointment.end_at >= now_utc,
+                )
             )
-        ) or 0
-        completed = db.scalar(
-            select(func.count(Appointment.id)).where(
-                Appointment.doctor_id == user.id,
-                Appointment.status == AppointmentStatus.COMPLETED.value,
+            or 0
+        )
+        completed = (
+            db.scalar(
+                select(func.count(Appointment.id)).where(
+                    Appointment.doctor_id == user.id,
+                    Appointment.status == AppointmentStatus.COMPLETED.value,
+                )
             )
-        ) or 0
+            or 0
+        )
 
     doctor_prof_schema = None
     if user.role == UserRole.DOCTOR.value and user.doctor_profile:
@@ -104,9 +112,13 @@ def update_user_profile(db: Session, user: User, payload: UpdateProfileRequest) 
     if payload.gender is not None:
         user.gender = payload.gender
     if payload.emergency_contact_name is not None:
-        user.emergency_contact_name = payload.emergency_contact_name.strip() if payload.emergency_contact_name.strip() else None
+        user.emergency_contact_name = (
+            payload.emergency_contact_name.strip() if payload.emergency_contact_name.strip() else None
+        )
     if payload.emergency_contact_phone is not None:
-        user.emergency_contact_phone = payload.emergency_contact_phone.strip() if payload.emergency_contact_phone.strip() else None
+        user.emergency_contact_phone = (
+            payload.emergency_contact_phone.strip() if payload.emergency_contact_phone.strip() else None
+        )
     if payload.patient_notes is not None:
         user.patient_notes = payload.patient_notes.strip() if payload.patient_notes.strip() else None
     if payload.avatar_color is not None:
@@ -167,10 +179,12 @@ def get_patient_notes_for_user(db: Session, requesting_user: User, patient_id: i
     # 2. Doctor viewing patient notes: must have at least one appointment with this patient
     if requesting_user.role == UserRole.DOCTOR.value:
         has_appointment = db.scalar(
-            select(Appointment.id).where(
+            select(Appointment.id)
+            .where(
                 Appointment.doctor_id == requesting_user.id,
                 Appointment.patient_id == patient_id,
-            ).limit(1)
+            )
+            .limit(1)
         )
         if not has_appointment:
             raise AppError(

@@ -12,7 +12,9 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { api, ApiError } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { addDaysInClinicTimezone, formatClinicFullDate, getTodayClinicDate } from '../utils/dateUtils';
 
 // Weekday names mapping
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -21,17 +23,12 @@ export default function DoctorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { isAuthenticated, role } = useAuth();
 
   const [doctor, setDoctor] = useState(null);
   const [loadingDoc, setLoadingDoc] = useState(true);
 
-  // Selected date state (defaults to today or tomorrow in YYYY-MM-DD)
-  const getInitialDate = () => {
-    const d = new Date();
-    return d.toISOString().split('T')[0];
-  };
-
-  const [selectedDate, setSelectedDate] = useState(getInitialDate);
+  const [selectedDate, setSelectedDate] = useState(getTodayClinicDate);
   const [slotsData, setSlotsData] = useState(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -104,11 +101,27 @@ export default function DoctorDetail() {
     }
   };
 
-  // Min and max date calculation
-  const todayStr = new Date().toISOString().split('T')[0];
-  const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 60);
-  const maxDateStr = maxDate.toISOString().split('T')[0];
+  const handleProceedToConfirm = () => {
+    if (!isAuthenticated) {
+      addToast('Please sign in or register as a patient to book this slot.', 'info');
+      navigate('/login', { state: { from: `/doctors/${id}` } });
+      return;
+    }
+    if (role === 'doctor') {
+      addToast('Doctors cannot book appointments. Please log in with a patient account.', 'warning');
+      return;
+    }
+    setBookingModalOpen(true);
+  };
+
+  // Group slots into Morning, Afternoon, and Evening
+  const morningSlots = slotsData?.slots.filter((s) => s.local_start < '12:00') || [];
+  const afternoonSlots = slotsData?.slots.filter((s) => s.local_start >= '12:00' && s.local_start < '17:00') || [];
+  const eveningSlots = slotsData?.slots.filter((s) => s.local_start >= '17:00') || [];
+
+  // Min and max date calculation using clinic timezone
+  const todayStr = getTodayClinicDate();
+  const maxDateStr = addDaysInClinicTimezone(new Date(), 60);
 
   if (loadingDoc) {
     return (
@@ -260,9 +273,7 @@ export default function DoctorDetail() {
               {/* Quick Date Presets */}
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {[0, 1, 2, 3].map((offset) => {
-                  const target = new Date();
-                  target.setDate(target.getDate() + offset);
-                  const str = target.toISOString().split('T')[0];
+                  const str = addDaysInClinicTimezone(new Date(), offset);
                   const label =
                     offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : `+${offset} Days`;
                   const active = selectedDate === str;
@@ -426,88 +437,154 @@ export default function DoctorDetail() {
                 </span>
               </div>
             ) : (
-              /* Free Slots Reflowing Grid */
+              /* Free Slots Grouped by Morning / Afternoon / Evening */
               <div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
-                    gap: '0.65rem',
-                    marginBottom: '1.75rem',
-                  }}
-                >
-                  {slotsData.slots.map((slot) => {
-                    const isSelected = selectedSlot?.start_at === slot.start_at;
-                    return (
-                      <motion.button
-                        key={slot.start_at}
-                        type="button"
-                        onClick={() => setSelectedSlot(slot)}
-                        animate={{
-                          backgroundColor: isSelected ? '#000000' : '#ffffff',
-                          color: isSelected ? '#ffffff' : '#000000',
-                          scale: isSelected ? 1.03 : 1,
-                        }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                        style={{
-                          border: '1px solid var(--border-color)',
-                          padding: '0.65rem 0.5rem',
-                          minHeight: '44px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          borderRadius: 'var(--radius-sm)',
-                        }}
-                      >
-                        <span className="mono" style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                          {slot.local_start}
-                        </span>
-                        <span
-                          className="mono"
-                          style={{
-                            fontSize: '0.65rem',
-                            opacity: isSelected ? 0.8 : 0.6,
-                          }}
-                        >
-                          to {slot.local_end}
-                        </span>
-                      </motion.button>
-                    );
-                  })}
-                </div>
+                {/* Morning Slots */}
+                {morningSlots.length > 0 && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.1rem' }}>🌅</span>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Morning Slots</h4>
+                      <span className="badge" style={{ backgroundColor: 'var(--color-slate-100)', color: 'var(--color-slate-600)' }}>
+                        {morningSlots.length} available
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.65rem' }}>
+                      {morningSlots.map((slot) => {
+                        const isSelected = selectedSlot?.start_at === slot.start_at;
+                        return (
+                          <button
+                            key={slot.start_at}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={isSelected ? 'btn-primary' : 'btn-outline'}
+                            style={{
+                              padding: '0.6rem 0.4rem',
+                              flexDirection: 'column',
+                              minHeight: '48px',
+                              borderRadius: 'var(--radius-md)',
+                            }}
+                          >
+                            <span className="mono" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+                              {slot.local_start}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                              to {slot.local_end}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-                {/* Continue to Booking Button */}
+                {/* Afternoon Slots */}
+                {afternoonSlots.length > 0 && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.1rem' }}>☀️</span>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Afternoon Slots</h4>
+                      <span className="badge" style={{ backgroundColor: 'var(--color-slate-100)', color: 'var(--color-slate-600)' }}>
+                        {afternoonSlots.length} available
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.65rem' }}>
+                      {afternoonSlots.map((slot) => {
+                        const isSelected = selectedSlot?.start_at === slot.start_at;
+                        return (
+                          <button
+                            key={slot.start_at}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={isSelected ? 'btn-primary' : 'btn-outline'}
+                            style={{
+                              padding: '0.6rem 0.4rem',
+                              flexDirection: 'column',
+                              minHeight: '48px',
+                              borderRadius: 'var(--radius-md)',
+                            }}
+                          >
+                            <span className="mono" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+                              {slot.local_start}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                              to {slot.local_end}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Evening Slots */}
+                {eveningSlots.length > 0 && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '1.1rem' }}>🌙</span>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>Evening Slots</h4>
+                      <span className="badge" style={{ backgroundColor: 'var(--color-slate-100)', color: 'var(--color-slate-600)' }}>
+                        {eveningSlots.length} available
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.65rem' }}>
+                      {eveningSlots.map((slot) => {
+                        const isSelected = selectedSlot?.start_at === slot.start_at;
+                        return (
+                          <button
+                            key={slot.start_at}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={isSelected ? 'btn-primary' : 'btn-outline'}
+                            style={{
+                              padding: '0.6rem 0.4rem',
+                              flexDirection: 'column',
+                              minHeight: '48px',
+                              borderRadius: 'var(--radius-md)',
+                            }}
+                          >
+                            <span className="mono" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+                              {slot.local_start}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                              to {slot.local_end}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Continue to Booking Action Bar */}
                 {selectedSlot && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
+                  <div
                     style={{
-                      borderTop: '1px solid var(--border-color)',
+                      borderTop: '1px solid var(--border-subtle)',
                       paddingTop: '1.25rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       flexWrap: 'wrap',
                       gap: '1rem',
+                      marginTop: '1.5rem',
                     }}
                   >
                     <div>
-                      <span className="mono-label" style={{ fontSize: '0.65rem' }}>SELECTED SLOT</span>
-                      <div className="mono" style={{ fontWeight: 800, fontSize: '1.1rem' }}>
+                      <span className="mono-label" style={{ fontSize: '0.7rem' }}>SELECTED APPOINTMENT SLOT</span>
+                      <div className="mono" style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--color-primary-800)' }}>
                         {selectedSlot.local_start} — {selectedSlot.local_end}
                       </div>
                     </div>
                     <button
                       type="button"
                       className="btn-primary"
-                      onClick={() => setBookingModalOpen(true)}
+                      onClick={handleProceedToConfirm}
                     >
                       <span>Proceed to Confirm</span>
                       <Check size={16} />
                     </button>
-                  </motion.div>
+                  </div>
                 )}
               </div>
             )}
@@ -522,26 +599,34 @@ export default function DoctorDetail() {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
+              background: 'rgba(15, 23, 42, 0.72)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 1000,
               padding: '1rem',
             }}
+            onClick={() => setBookingModalOpen(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ duration: 0.18 }}
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
-                maxWidth: '480px',
-                background: 'var(--color-white)',
-                border: '1px solid var(--color-black)',
+                maxWidth: '500px',
+                background: '#ffffff',
+                backgroundColor: '#ffffff',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-default)',
                 padding: '2rem',
-                boxShadow: '8px 8px 0 0 #000000',
+                boxShadow: 'var(--shadow-modal)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
               }}
             >
               <div
@@ -553,8 +638,10 @@ export default function DoctorDetail() {
                 }}
               >
                 <div>
-                  <span className="mono-label">[CONFIRM APPOINTMENT]</span>
-                  <h3 style={{ marginTop: '0.2rem' }}>Appointment Summary</h3>
+                  <span className="mono-label" style={{ color: 'var(--color-teal-700)', fontWeight: 700 }}>
+                    [CONFIRM APPOINTMENT]
+                  </span>
+                  <h3 style={{ marginTop: '0.2rem', fontSize: '1.35rem' }}>Appointment Summary</h3>
                 </div>
                 <button
                   type="button"
@@ -563,8 +650,9 @@ export default function DoctorDetail() {
                     background: 'none',
                     border: 'none',
                     minHeight: 'auto',
-                    padding: 0,
+                    padding: '0.25rem',
                     cursor: 'pointer',
+                    color: 'var(--text-muted)',
                   }}
                 >
                   <X size={20} />
@@ -574,13 +662,15 @@ export default function DoctorDetail() {
               {/* Summary Details */}
               <div
                 style={{
-                  border: '1px solid var(--border-color)',
-                  padding: '1rem',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '1.25rem',
                   marginBottom: '1.25rem',
-                  background: 'var(--color-gray-50)',
+                  background: 'var(--color-slate-50)',
+                  backgroundColor: '#f8fafc',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.5rem',
+                  gap: '0.65rem',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>

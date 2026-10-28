@@ -11,6 +11,7 @@ from app.core.database import Base
 
 class UserRole(str, Enum):
     """User roles."""
+
     PATIENT = "patient"
     DOCTOR = "doctor"
 
@@ -19,9 +20,7 @@ class User(Base):
     """User account entity."""
 
     __tablename__ = "users"
-    __table_args__ = (
-        CheckConstraint("role IN ('patient', 'doctor')", name="check_user_role"),
-    )
+    __table_args__ = (CheckConstraint("role IN ('patient', 'doctor')", name="check_user_role"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)

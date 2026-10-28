@@ -151,7 +151,9 @@ def test_doctor_patient_notes_privacy_rules(client: TestClient, db: Session, see
 
     token_doc1 = create_access_token({"sub": str(doc1.id), "role": doc1.role, "email": doc1.email})
     token_doc2 = create_access_token({"sub": str(doc2.id), "role": doc2.role, "email": doc2.email})
-    token_other_pat = create_access_token({"sub": str(other_patient.id), "role": other_patient.role, "email": other_patient.email})
+    token_other_pat = create_access_token(
+        {"sub": str(other_patient.id), "role": other_patient.role, "email": other_patient.email}
+    )
 
     # 1. Doctor 1 (has appointment) -> Allowed
     resp_doc1 = client.get(
@@ -198,7 +200,9 @@ def test_download_appointment_ics(client: TestClient, db: Session, seed_test_dat
     db.refresh(appt)
 
     token_patient = create_access_token({"sub": str(patient.id), "role": patient.role, "email": patient.email})
-    token_unrelated = create_access_token({"sub": str(unrelated_user.id), "role": unrelated_user.role, "email": unrelated_user.email})
+    token_unrelated = create_access_token(
+        {"sub": str(unrelated_user.id), "role": unrelated_user.role, "email": unrelated_user.email}
+    )
 
     # 1. Patient downloads ICS -> 200 OK, text/calendar
     resp_ics = client.get(

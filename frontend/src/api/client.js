@@ -60,10 +60,10 @@ async function request(endpoint, options = {}) {
       window.dispatchEvent(new Event('pulse_auth_logout'));
     }
 
-    const errorBody = data?.error;
-    const code = errorBody?.code || `HTTP_${response.status}`;
-    const message = errorBody?.message || response.statusText || 'An error occurred';
-    const fields = errorBody?.fields || {};
+    const errorBody = data?.error || {};
+    const code = data?.code || errorBody.code || `HTTP_${response.status}`;
+    const message = data?.message || errorBody.message || response.statusText || 'An error occurred';
+    const fields = data?.fields || errorBody.fields || {};
 
     throw new ApiError(response.status, code, message, fields);
   }
@@ -102,13 +102,14 @@ export const api = {
 
   // Patient Appointments
   appointments: {
+    list: (scope = 'upcoming') => request(`/appointments?scope=${scope}`),
+    upcoming: () => request('/appointments/upcoming'),
+    past: () => request('/appointments/past'),
     book: (doctorId, startAt, reason) =>
       request('/appointments', {
         method: 'POST',
         body: JSON.stringify({ doctor_id: doctorId, start_at: startAt, reason }),
       }),
-    upcoming: () => request('/appointments/upcoming'),
-    past: () => request('/appointments/past'),
     cancel: (appointmentId) =>
       request(`/appointments/${appointmentId}/cancel`, {
         method: 'POST',

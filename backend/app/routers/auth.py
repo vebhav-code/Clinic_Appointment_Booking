@@ -56,9 +56,7 @@ def register_patient(
     db.refresh(new_user)
 
     # Generate JWT access token
-    access_token = create_access_token(
-        data={"sub": str(new_user.id), "role": new_user.role, "email": new_user.email}
-    )
+    access_token = create_access_token(data={"sub": str(new_user.id), "role": new_user.role, "email": new_user.email})
 
     return TokenResponse(
         access_token=access_token,
@@ -89,9 +87,7 @@ def login(
             message="Invalid email or password. Please check your credentials.",
         )
 
-    access_token = create_access_token(
-        data={"sub": str(user.id), "role": user.role, "email": user.email}
-    )
+    access_token = create_access_token(data={"sub": str(user.id), "role": user.role, "email": user.email})
 
     return TokenResponse(
         access_token=access_token,

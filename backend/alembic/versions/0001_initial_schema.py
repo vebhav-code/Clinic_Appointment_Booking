@@ -1,10 +1,11 @@
-"""Initial schema with btree_gist and appointment exclusion constraint.
+"""Initial schema with btree_gist and appointment exclusion constraints.
 
 Revision ID: 0001_initial_schema
-Revises: 
+Revises:
 Create Date: 2026-10-27 12:00:00.000000
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -104,6 +105,7 @@ def upgrade() -> None:
         ),
         sa.Column("cancelled_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("cancelled_by", sa.Integer(), nullable=True),
+        sa.Column("email_reminder_sent_at", sa.DateTime(timezone=True), nullable=True),
         sa.CheckConstraint(
             "status IN ('booked', 'completed', 'no_show', 'cancelled')",
             name="check_appointment_status",
@@ -118,7 +120,7 @@ def upgrade() -> None:
     op.create_index("ix_appointments_patient_start", "appointments", ["patient_id", "start_at"])
     op.create_index("ix_appointments_status", "appointments", ["status"])
 
-    # Add PostgreSQL EXCLUDE constraint using gist for active appointments
+    # Add PostgreSQL EXCLUDE constraint using gist for active appointments (doctor)
     op.execute(
         """
         ALTER TABLE appointments
@@ -127,7 +129,20 @@ def upgrade() -> None:
             doctor_id WITH =,
             tstzrange(start_at, end_at) WITH &&
         )
-        WHERE (status = 'booked' OR status = 'completed' OR status = 'no_show');
+        WHERE (status IN ('booked', 'completed', 'no_show'));
+        """
+    )
+
+    # Add PostgreSQL EXCLUDE constraint using gist for active appointments (patient)
+    op.execute(
+        """
+        ALTER TABLE appointments
+        ADD CONSTRAINT exclude_patient_overlapping_appointments
+        EXCLUDE USING gist (
+            patient_id WITH =,
+            tstzrange(start_at, end_at) WITH &&
+        )
+        WHERE (status IN ('booked', 'completed', 'no_show'));
         """
     )
 

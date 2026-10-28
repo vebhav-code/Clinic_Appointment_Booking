@@ -19,9 +19,23 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import create_access_token, get_password_hash
 from app.main import app
-from app.models.appointment import Appointment, Reminder
-from app.models.doctor import AvailabilityRule, DoctorLeave, DoctorProfile
+from app.models.doctor import AvailabilityRule, DoctorProfile
 from app.models.user import User, UserRole
+
+# Safety verification: ensure TEST_DATABASE_URL is set and never equals DATABASE_URL
+if not settings.TEST_DATABASE_URL:
+    raise RuntimeError(
+        "TEST_DATABASE_URL environment variable is required to run tests against real PostgreSQL. "
+        "Refusing to run tests without an isolated test database."
+    )
+
+if settings.sync_test_database_url == settings.sync_database_url or (
+    settings.DEV_DATABASE_URL and settings.sync_test_database_url == settings.DEV_DATABASE_URL
+):
+    raise RuntimeError(
+        "Refusing to run tests: TEST_DATABASE_URL equals DATABASE_URL or DEV_DATABASE_URL. "
+        "Tests must run ONLY against a dedicated test database to protect live data."
+    )
 
 # Use the real PostgreSQL test database URL
 test_engine = create_engine(
@@ -59,6 +73,7 @@ def db() -> Generator[Session, None, None]:
 @pytest.fixture
 def client() -> Generator[TestClient, None, None]:
     """Test client overriding the get_db dependency with thread-safe session maker."""
+
     def override_get_db():
         session = TestingSessionLocal()
         try:
@@ -76,13 +91,14 @@ def client() -> Generator[TestClient, None, None]:
 def seed_test_data(db: Session):
     """Seed sample doctors with rules and sample patients."""
     # Clean previous test entries to avoid collisions
-    db.query(Reminder).delete()
-    db.query(Appointment).delete()
-    db.query(DoctorLeave).delete()
-    db.query(AvailabilityRule).delete()
-    db.query(DoctorProfile).delete()
-    db.query(User).filter(User.email.like("test_%@clinic.com")).delete()
+    db.execute(text("DELETE FROM reminders;"))
+    db.execute(text("DELETE FROM appointments;"))
+    db.execute(text("DELETE FROM doctor_leaves;"))
+    db.execute(text("DELETE FROM availability_rules;"))
+    db.execute(text("DELETE FROM doctor_profiles;"))
+    db.execute(text("DELETE FROM users WHERE email LIKE 'test_%@clinic.com';"))
     db.commit()
+    db.expire_all()
 
     # 1. Create Doctor 1
     doc1 = User(

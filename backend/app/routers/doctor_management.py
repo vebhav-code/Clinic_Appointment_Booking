@@ -62,9 +62,7 @@ def get_my_leaves(
 ):
     """Retrieve all leave records for the logged-in doctor."""
     leaves = db.scalars(
-        select(DoctorLeave)
-        .where(DoctorLeave.doctor_id == current_doctor.id)
-        .order_by(DoctorLeave.date)
+        select(DoctorLeave).where(DoctorLeave.doctor_id == current_doctor.id).order_by(DoctorLeave.date)
     ).all()
     return list(leaves)
 
@@ -103,6 +101,21 @@ def delete_leave_date(
     """Remove a previously blocked leave date, restoring normal weekly availability."""
     doctor_service.unblock_doctor_leave_date(db, current_doctor.id, date)
     return {"message": f"Leave date {date} removed successfully."}
+
+
+@router.delete(
+    "/leaves/{leave_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Unblock a doctor leave by ID",
+)
+def delete_leave_by_id(
+    leave_id: int,
+    current_doctor: User = Depends(require_doctor),
+    db: Session = Depends(get_db),
+):
+    """Remove a previously blocked leave by ID, restoring normal weekly availability."""
+    doctor_service.unblock_doctor_leave_by_id(db, current_doctor.id, leave_id)
+    return {"message": f"Leave {leave_id} removed successfully."}
 
 
 @router.get(

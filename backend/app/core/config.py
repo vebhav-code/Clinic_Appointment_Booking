@@ -1,9 +1,17 @@
 """Application configuration and environment settings."""
 
+import socket
+from pathlib import Path
+from urllib.parse import urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Resolve absolute path to the root Booking_System/.env file regardless of CWD
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+ROOT_DIR = BACKEND_DIR.parent
+ROOT_ENV_FILE = ROOT_DIR / ".env"
 
 
 def normalize_database_url(url: str) -> str:
@@ -24,7 +32,7 @@ class Settings(BaseSettings):
     """Clinic appointment booking application settings."""
 
     model_config = SettingsConfigDict(
-        env_file=(".env", "../.env"),
+        env_file=ROOT_ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -37,6 +45,10 @@ class Settings(BaseSettings):
     TEST_DATABASE_URL: str | None = Field(
         default=None,
         description="Optional dedicated test PostgreSQL connection URL",
+    )
+    DEV_DATABASE_URL: str | None = Field(
+        default=None,
+        description="Local development database URL when working outside Render internal network",
     )
 
     # Security & Auth
@@ -98,8 +110,21 @@ class Settings(BaseSettings):
 
     @property
     def sync_database_url(self) -> str:
-        """Normalized sync database URL for SQLAlchemy with psycopg3."""
-        return normalize_database_url(self.DATABASE_URL)
+        """Normalized sync database URL for SQLAlchemy with psycopg3.
+
+        If the primary DATABASE_URL points to a Render internal host that cannot
+        resolve in the current environment, seamlessly falls back to DEV_DATABASE_URL.
+        """
+        raw_url = self.DATABASE_URL
+        if self.DEV_DATABASE_URL:
+            try:
+                clean_url = raw_url.replace("postgresql+psycopg://", "postgresql://")
+                parsed = urlparse(clean_url)
+                if parsed.hostname:
+                    socket.gethostbyname(parsed.hostname)
+            except (socket.gaierror, OSError):
+                raw_url = self.DEV_DATABASE_URL
+        return normalize_database_url(raw_url)
 
     @property
     def sync_test_database_url(self) -> str:

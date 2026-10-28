@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Trash2, Plus, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api, ApiError } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
+import { getTodayClinicDate } from '../../utils/dateUtils';
 
 export default function DoctorLeaves() {
   const [leaves, setLeaves] = useState([]);
@@ -61,7 +62,7 @@ export default function DoctorLeaves() {
     }
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayClinicDate();
 
   return (
     <div style={{ padding: '2.5rem 0 5rem', minHeight: 'calc(100vh - 64px)' }}>

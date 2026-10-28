@@ -30,6 +30,10 @@ register_error_handlers(app)
 
 # CORS Configuration
 origins = [origin.strip() for origin in settings.FRONTEND_ORIGIN.split(",") if origin.strip()]
+for dev_host in ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"]:
+    if dev_host not in origins:
+        origins.append(dev_host)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins or ["*"],

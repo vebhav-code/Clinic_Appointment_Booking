@@ -22,6 +22,7 @@ from app.core.database import Base
 
 class AppointmentStatus(str, Enum):
     """Appointment statuses."""
+
     BOOKED = "booked"
     COMPLETED = "completed"
     NO_SHOW = "no_show"
@@ -47,6 +48,14 @@ class Appointment(Base):
             where=text("status IN ('booked', 'completed', 'no_show')"),
             using="gist",
             name="exclude_doctor_overlapping_appointments",
+        ),
+        # Concurrency constraint: One patient cannot hold two overlapping active appointments
+        ExcludeConstraint(
+            ("patient_id", "="),
+            (text("tstzrange(start_at, end_at)"), "&&"),
+            where=text("status IN ('booked', 'completed', 'no_show')"),
+            using="gist",
+            name="exclude_patient_overlapping_appointments",
         ),
     )
 
@@ -79,6 +88,10 @@ class Appointment(Base):
     cancelled_by: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    email_reminder_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
     )
 

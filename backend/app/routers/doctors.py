@@ -1,4 +1,4 @@
-"""Public doctor directory and slot exploration endpoints (accessible to authenticated users)."""
+"""Public doctor directory and slot exploration endpoints."""
 
 from datetime import date
 
@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_optional_current_user
 from app.models.user import User
 from app.schemas.doctor import DoctorDetailResponse, DoctorListItem, SlotsResponse
 from app.services import doctor_service
@@ -23,7 +23,7 @@ def list_doctors(
     speciality: str | None = Query(None, description="Filter by doctor speciality"),
     search: str | None = Query(None, description="Search by doctor name or speciality"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
     """Retrieve list of active clinic doctors."""
     return doctor_service.get_all_doctors(db, speciality=speciality, search=search)
@@ -37,7 +37,7 @@ def list_doctors(
 def get_doctor(
     doctor_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
     """Retrieve details for a single doctor."""
     return doctor_service.get_doctor_details(db, doctor_id)
@@ -52,7 +52,7 @@ def get_doctor_slots(
     doctor_id: int,
     date: date = Query(..., description="Target date in YYYY-MM-DD format"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
     """Compute available booking slots for a doctor on the specified date."""
     return doctor_service.get_doctor_slots_for_date(db, doctor_id, date)

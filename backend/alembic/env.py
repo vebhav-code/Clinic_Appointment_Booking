@@ -1,3 +1,4 @@
+import os
 import sys
 from logging.config import fileConfig
 from pathlib import Path
@@ -12,7 +13,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 import app.models  # noqa: F401 - Ensure all models are imported for metadata reflection
-from app.core.config import settings
+from app.core.config import normalize_database_url, settings
 from app.core.database import Base
 
 # this is the Alembic Config object, which provides
@@ -23,8 +24,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Set the sqlalchemy.url from our settings if not set via CLI
-database_url = settings.sync_database_url
+# Set the sqlalchemy.url from our settings or ALEMBIC_DATABASE_URL if specified
+effective_url = os.environ.get("ALEMBIC_DATABASE_URL")
+if effective_url:
+    database_url = normalize_database_url(effective_url)
+else:
+    database_url = settings.sync_database_url
+
 config.set_main_option("sqlalchemy.url", database_url)
 
 target_metadata = Base.metadata
@@ -47,7 +53,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.sync_database_url
+    configuration["sqlalchemy.url"] = database_url
 
     connectable = engine_from_config(
         configuration,

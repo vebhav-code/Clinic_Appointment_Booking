@@ -1,6 +1,6 @@
 """Patient appointment endpoints: booking, cancellation, rescheduling, and history."""
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -35,6 +35,22 @@ def book(
         start_at=payload.start_at,
         reason=payload.reason,
     )
+
+
+@router.get(
+    "",
+    response_model=list[AppointmentResponse],
+    summary="Get patient appointments filtered by scope (upcoming or past)",
+)
+def get_patient_appointments_scoped(
+    scope: str = Query("upcoming", description="upcoming or past"),
+    current_patient: User = Depends(require_patient),
+    db: Session = Depends(get_db),
+):
+    """Retrieve appointments for current patient by scope (upcoming or past)."""
+    if scope == "past":
+        return appointment_service.get_patient_past_appointments(db, current_patient.id)
+    return appointment_service.get_patient_upcoming_appointments(db, current_patient.id)
 
 
 @router.get(
@@ -117,4 +133,3 @@ def download_appointment_ics(
             "Content-Disposition": f'attachment; filename="appointment-{appointment_id}.ics"',
         },
     )
-

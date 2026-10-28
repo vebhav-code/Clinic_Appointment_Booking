@@ -31,7 +31,14 @@ export default function Navbar() {
     { label: 'Schedule by Date', path: '/doctor/schedule' },
   ];
 
-  const links = isPatient ? patientLinks : isDoctor ? doctorLinks : [];
+  const guestLinks = [
+    { label: 'Home', path: '/' },
+    { label: 'Doctors', path: '/doctors' },
+    { label: 'Sign In', path: '/login' },
+    { label: 'Register', path: '/register' },
+  ];
+
+  const links = isPatient ? patientLinks : isDoctor ? doctorLinks : guestLinks;
 
   return (
     <>
@@ -55,7 +62,7 @@ export default function Navbar() {
         >
           {/* Brand Logo */}
           <Link
-            to={isDoctor ? '/doctor/today' : '/doctors'}
+            to={user ? (isDoctor ? '/doctor/today' : '/my-appointments') : '/'}
             style={{
               textDecoration: 'none',
               color: 'inherit',
@@ -79,9 +86,10 @@ export default function Navbar() {
               style={{
                 fontSize: '0.75rem',
                 padding: '0.15rem 0.4rem',
-                background: 'var(--color-black)',
+                background: 'var(--color-teal-600)',
                 color: 'var(--color-white)',
                 fontWeight: 600,
+                borderRadius: 'var(--radius-sm)',
               }}
             >
               CLINIC
@@ -97,216 +105,266 @@ export default function Navbar() {
             }}
             className="desktop-nav"
           >
-            {links.map((link) => {
-              const active = location.pathname === link.path;
-              return (
+            {user ? (
+              links.map((link) => {
+                const active = location.pathname === link.path;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    style={{
+                      textDecoration: 'none',
+                      color: active ? 'var(--color-teal-700)' : 'var(--text-secondary)',
+                      fontWeight: active ? 700 : 500,
+                      fontSize: '0.9rem',
+                      position: 'relative',
+                      padding: '0.4rem 0',
+                    }}
+                  >
+                    {link.label}
+                    {active && (
+                      <motion.div
+                        layoutId="activeNavIndicator"
+                        style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: '2px',
+                          background: 'var(--color-teal-600)',
+                        }}
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                );
+              })
+            ) : (
+              <>
                 <Link
-                  key={link.path}
-                  to={link.path}
+                  to="/"
                   style={{
                     textDecoration: 'none',
-                    color: active ? 'var(--color-black)' : 'var(--text-secondary)',
-                    fontWeight: active ? 700 : 500,
+                    color: location.pathname === '/' ? 'var(--color-teal-700)' : 'var(--text-secondary)',
+                    fontWeight: location.pathname === '/' ? 700 : 500,
                     fontSize: '0.9rem',
-                    position: 'relative',
-                    padding: '0.4rem 0',
                   }}
                 >
-                  {link.label}
-                  {active && (
-                    <motion.div
-                      layoutId="activeNavIndicator"
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: '2px',
-                        background: 'var(--color-black)',
-                      }}
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
+                  Home
                 </Link>
-              );
-            })}
+                <Link
+                  to="/doctors"
+                  style={{
+                    textDecoration: 'none',
+                    color: location.pathname === '/doctors' ? 'var(--color-teal-700)' : 'var(--text-secondary)',
+                    fontWeight: location.pathname === '/doctors' ? 700 : 500,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Find Doctors
+                </Link>
+              </>
+            )}
           </nav>
 
-          {/* User Profile & Notifications */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            {/* Reminder Bell Button */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setIsReminderOpen((prev) => !prev)}
-                aria-label="View in-app notifications"
-                style={{
-                  minHeight: '40px',
-                  height: '40px',
-                  width: '40px',
-                  padding: 0,
-                  borderRadius: 'var(--radius-sm)',
-                  position: 'relative',
-                }}
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && (
-                  <span
-                    className="mono"
+            {/* User Profile & Notifications */}
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                {/* Reminder Bell Button */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsReminderOpen((prev) => !prev)}
+                    aria-label="View in-app notifications"
                     style={{
-                      position: 'absolute',
-                      top: '-4px',
-                      right: '-4px',
-                      background: 'var(--color-black)',
-                      color: 'var(--color-white)',
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      height: '18px',
-                      minWidth: '18px',
-                      padding: '0 3px',
-                      borderRadius: '9px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid var(--color-white)',
+                      minHeight: '40px',
+                      height: '40px',
+                      width: '40px',
+                      padding: 0,
+                      borderRadius: 'var(--radius-sm)',
+                      position: 'relative',
                     }}
                   >
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Reminders Dropdown Popup */}
-              <AnimatePresence>
-                {isReminderOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ duration: 0.15 }}
-                    style={{
-                      position: 'absolute',
-                      right: 0,
-                      top: '48px',
-                      width: '320px',
-                      background: 'var(--color-white)',
-                      border: '1px solid var(--color-black)',
-                      boxShadow: '4px 4px 0 0 #000000',
-                      zIndex: 200,
-                      maxHeight: '400px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: '0.75rem 1rem',
-                        borderBottom: '1px solid var(--color-black)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span className="mono-label" style={{ fontWeight: 700, color: 'var(--color-black)' }}>
-                        Notifications ({unreadCount})
-                      </span>
-                      <button
-                        onClick={() => setIsReminderOpen(false)}
+                    <Bell size={18} />
+                    {unreadCount > 0 && (
+                      <span
+                        className="mono"
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          minHeight: 'auto',
-                          cursor: 'pointer',
+                          position: 'absolute',
+                          top: '-4px',
+                          right: '-4px',
+                          background: 'var(--color-teal-600)',
+                          color: 'var(--color-white)',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          height: '18px',
+                          minWidth: '18px',
+                          padding: '0 3px',
+                          borderRadius: '9px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid var(--color-white)',
                         }}
                       >
-                        <X size={16} />
-                      </button>
-                    </div>
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
 
-                    <div style={{ overflowY: 'auto', padding: '0.5rem' }}>
-                      {reminders.length === 0 ? (
-                        <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                          <span className="mono" style={{ fontSize: '0.8rem' }}>No due reminders</span>
-                        </div>
-                      ) : (
-                        reminders.map((r) => (
-                          <div
-                            key={r.id}
+                  {/* Reminders Dropdown Popup */}
+                  <AnimatePresence>
+                    {isReminderOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.15 }}
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: '48px',
+                          width: '320px',
+                          background: 'var(--color-white)',
+                          border: '1px solid var(--border-color)',
+                          boxShadow: 'var(--shadow-lg)',
+                          borderRadius: 'var(--radius-md)',
+                          zIndex: 200,
+                          maxHeight: '400px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid var(--border-color)',
+                            background: 'var(--color-gray-50)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <span className="mono-label" style={{ fontWeight: 700, color: 'var(--color-teal-800)' }}>
+                            Notifications ({unreadCount})
+                          </span>
+                          <button
+                            onClick={() => setIsReminderOpen(false)}
                             style={{
-                              padding: '0.75rem',
-                              borderBottom: '1px solid var(--color-gray-200)',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.35rem',
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              minHeight: 'auto',
+                              cursor: 'pointer',
                             }}
                           >
-                            <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{r.title}</span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{r.message}</span>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
-                              <button
-                                onClick={() => markReminderRead(r.id)}
+                            <X size={16} />
+                          </button>
+                        </div>
+
+                        <div style={{ overflowY: 'auto', padding: '0.5rem' }}>
+                          {reminders.length === 0 ? (
+                            <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                              <span className="mono" style={{ fontSize: '0.8rem' }}>No due reminders</span>
+                            </div>
+                          ) : (
+                            reminders.map((r) => (
+                              <div
+                                key={r.id}
                                 style={{
-                                  fontSize: '0.7rem',
-                                  padding: '0.2rem 0.5rem',
-                                  minHeight: '26px',
+                                  padding: '0.75rem',
+                                  borderBottom: '1px solid var(--color-gray-100)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.35rem',
                                 }}
                               >
-                                Dismiss
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{r.title}</span>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{r.message}</span>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
+                                  <button
+                                    onClick={() => markReminderRead(r.id)}
+                                    style={{
+                                      fontSize: '0.7rem',
+                                      padding: '0.2rem 0.5rem',
+                                      minHeight: '26px',
+                                    }}
+                                  >
+                                    Dismiss
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-            {/* User Badge */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                border: '1px solid var(--border-color)',
-                padding: '0.3rem 0.65rem',
-                borderRadius: 'var(--radius-sm)',
-              }}
-            >
-              <span className="mono" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                {user?.full_name?.split(' ')[0]}
-              </span>
-              <span
-                className="status-badge"
-                style={{
-                  padding: '0.1rem 0.35rem',
-                  fontSize: '0.65rem',
-                  background: isDoctor ? 'var(--color-black)' : 'var(--color-gray-100)',
-                  color: isDoctor ? 'var(--color-white)' : 'var(--color-black)',
-                }}
-              >
-                {role}
-              </span>
-            </div>
+                {/* User Badge */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    border: '1px solid var(--border-color)',
+                    padding: '0.3rem 0.65rem',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'var(--color-gray-50)',
+                  }}
+                >
+                  <span className="mono" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                    {user?.full_name?.split(' ')[0]}
+                  </span>
+                  <span
+                    className="status-badge"
+                    style={{
+                      padding: '0.1rem 0.35rem',
+                      fontSize: '0.65rem',
+                      background: isDoctor ? 'var(--color-teal-600)' : 'var(--color-gray-200)',
+                      color: isDoctor ? 'var(--color-white)' : 'var(--text-primary)',
+                    }}
+                  >
+                    {role}
+                  </span>
+                </div>
 
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              aria-label="Logout"
-              style={{
-                minHeight: '40px',
-                height: '40px',
-                width: '40px',
-                padding: 0,
-                borderRadius: 'var(--radius-sm)',
-              }}
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  title="Logout"
+                  aria-label="Logout"
+                  style={{
+                    minHeight: '40px',
+                    height: '40px',
+                    width: '40px',
+                    padding: 0,
+                    borderRadius: 'var(--radius-sm)',
+                  }}
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Link
+                  to="/login"
+                  className="btn-outline"
+                  style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.35rem 0.85rem' }}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="btn-primary"
+                  style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.35rem 0.85rem' }}
+                >
+                  Register
+                </Link>
+              </div>
+            )}
         </div>
       </header>
 

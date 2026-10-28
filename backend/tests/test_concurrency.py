@@ -116,7 +116,9 @@ def test_patient_overlapping_appointment_rejected(client: TestClient, seed_test_
     p1_token = seed_test_data["patient1_token"]
 
     future_date = (datetime.now(timezone.utc).astimezone(settings.tz) + timedelta(days=6)).date()
-    slot_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 0, tzinfo=settings.tz).astimezone(timezone.utc)
+    slot_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 0, tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
 
     # First booking with Doctor 1 succeeds
     r1 = client.post(
@@ -186,7 +188,9 @@ def test_cancelled_slot_becomes_bookable_again(client: TestClient, seed_test_dat
     p2_token = seed_test_data["patient2_token"]
 
     future_date = (datetime.now(timezone.utc).astimezone(settings.tz) + timedelta(days=7)).date()
-    slot_utc = datetime(future_date.year, future_date.month, future_date.day, 11, 0, tzinfo=settings.tz).astimezone(timezone.utc)
+    slot_utc = datetime(future_date.year, future_date.month, future_date.day, 11, 0, tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
 
     # Patient 1 books
     r1 = client.post(
@@ -220,7 +224,9 @@ def test_atomic_reschedule_leaves_old_intact_if_new_fails(client: TestClient, se
     p1_token = seed_test_data["patient1_token"]
 
     future_date = (datetime.now(timezone.utc).astimezone(settings.tz) + timedelta(days=8)).date()
-    slot1_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 0, tzinfo=settings.tz).astimezone(timezone.utc)
+    slot1_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 0, tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
 
     # Book slot 1
     r1 = client.post(
@@ -232,7 +238,9 @@ def test_atomic_reschedule_leaves_old_intact_if_new_fails(client: TestClient, se
     appt_id = r1.json()["id"]
 
     # Attempt to reschedule to an invalid / non-existent time (e.g. 03:00 AM)
-    invalid_new_slot = datetime(future_date.year, future_date.month, future_date.day, 3, 0, tzinfo=settings.tz).astimezone(timezone.utc)
+    invalid_new_slot = datetime(
+        future_date.year, future_date.month, future_date.day, 3, 0, tzinfo=settings.tz
+    ).astimezone(timezone.utc)
 
     r_resched_fail = client.post(
         f"/api/v1/appointments/{appt_id}/reschedule",

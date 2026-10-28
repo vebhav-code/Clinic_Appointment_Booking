@@ -38,10 +38,7 @@ def test_slot_generation_multiple_windows():
 
     assert len(slots) == 8
     local_starts = [s.local_start for s in slots]
-    assert local_starts == [
-        "10:00", "10:30", "11:00", "11:30",
-        "17:00", "17:30", "18:00", "18:30"
-    ]
+    assert local_starts == ["10:00", "10:30", "11:00", "11:30", "17:00", "17:30", "18:00", "18:30"]
 
 
 def test_partial_slot_dropped():
@@ -152,9 +149,7 @@ def test_booked_slot_removed_from_list():
     booked_start_utc = datetime(2026, 11, 10, 5, 0, tzinfo=timezone.utc)
     booked_end_utc = datetime(2026, 11, 10, 5, 30, tzinfo=timezone.utc)
 
-    existing = [
-        BookedInterval(start_at=booked_start_utc, end_at=booked_end_utc, status="booked")
-    ]
+    existing = [BookedInterval(start_at=booked_start_utc, end_at=booked_end_utc, status="booked")]
 
     slots = generate_slots_for_date(
         target_date=target_date,
@@ -180,9 +175,7 @@ def test_cancelled_appointment_slot_is_available():
     cancelled_start_utc = datetime(2026, 11, 10, 4, 30, tzinfo=timezone.utc)  # 10:00 IST
     cancelled_end_utc = datetime(2026, 11, 10, 5, 0, tzinfo=timezone.utc)
 
-    existing = [
-        BookedInterval(start_at=cancelled_start_utc, end_at=cancelled_end_utc, status="cancelled")
-    ]
+    existing = [BookedInterval(start_at=cancelled_start_utc, end_at=cancelled_end_utc, status="cancelled")]
 
     slots = generate_slots_for_date(
         target_date=target_date,

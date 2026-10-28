@@ -116,7 +116,6 @@ class DoctorLeaveResponse(BaseModel):
     reason: str | None = None
 
 
-
 class SlotsResponse(BaseModel):
     """Response containing free slots for a doctor on a specific date."""
 

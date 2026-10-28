@@ -256,7 +256,55 @@ export default function DoctorsList() {
                   </div>
 
                   {/* Doctor Name */}
-                  <h3 style={{ fontSize: '1.35rem', marginBottom: '0.5rem' }}>{doc.full_name}</h3>
+                  <h3 style={{ fontSize: '1.35rem', marginBottom: '0.35rem' }}>{doc.full_name}</h3>
+
+                  {/* Next Available Slot Chip */}
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    {doc.next_available_slot ? (
+                      <span
+                        className="mono"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.2rem 0.6rem',
+                          background: 'var(--color-teal-50)',
+                          border: '1px solid var(--color-teal-200)',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.75rem',
+                          color: 'var(--color-teal-900)',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: 'var(--color-teal-600)',
+                            display: 'inline-block',
+                          }}
+                        />
+                        Next: {new Date(doc.next_available_slot.start_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {doc.next_available_slot.local_start}
+                      </span>
+                    ) : (
+                      <span
+                        className="mono"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '0.2rem 0.5rem',
+                          background: 'var(--color-gray-100)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.72rem',
+                          color: 'var(--text-muted)',
+                        }}
+                      >
+                        No slots in next 14 days
+                      </span>
+                    )}
+                  </div>
 
                   {/* Bio */}
                   <p

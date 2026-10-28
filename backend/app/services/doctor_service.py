@@ -43,8 +43,7 @@ def get_all_doctors(
     if search:
         search_term = f"%{search.strip().lower()}%"
         query = query.where(
-            func.lower(User.full_name).like(search_term)
-            | func.lower(DoctorProfile.speciality).like(search_term)
+            func.lower(User.full_name).like(search_term) | func.lower(DoctorProfile.speciality).like(search_term)
         )
 
     query = query.order_by(User.full_name)
@@ -94,10 +93,7 @@ def find_doctor_next_available_slot(
 
 def get_doctor_details(db: Session, doctor_id: int) -> DoctorDetailResponse:
     """Retrieve full doctor profile including availability rules."""
-    user = db.scalar(
-        select(User)
-        .where(User.id == doctor_id, User.role == UserRole.DOCTOR.value)
-    )
+    user = db.scalar(select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value))
     if not user or not user.doctor_profile:
         raise AppError(
             status_code=404,
@@ -139,9 +135,7 @@ def get_doctor_slots_for_date(
     now_utc: datetime | None = None,
 ) -> SlotsResponse:
     """Compute all available free slots for a doctor on a specific date."""
-    user = db.scalar(
-        select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value)
-    )
+    user = db.scalar(select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value))
     if not user or not user.doctor_profile:
         raise AppError(
             status_code=404,
@@ -175,7 +169,9 @@ def get_doctor_slots_for_date(
     # 3. Query existing appointments on that date in UTC range
     # In clinic timezone, date spans from target_date 00:00 to target_date+1 00:00
     start_of_day_utc = datetime.combine(target_date, time(0, 0), tzinfo=settings.tz).astimezone(timezone.utc)
-    end_of_day_utc = datetime.combine(target_date, time(23, 59, 59, 999999), tzinfo=settings.tz).astimezone(timezone.utc)
+    end_of_day_utc = datetime.combine(target_date, time(23, 59, 59, 999999), tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
 
     db_appts = db.scalars(
         select(Appointment).where(
@@ -185,10 +181,7 @@ def get_doctor_slots_for_date(
             Appointment.status.in_(["booked", "completed", "no_show"]),
         )
     ).all()
-    booked_intervals = [
-        BookedInterval(start_at=a.start_at, end_at=a.end_at, status=a.status)
-        for a in db_appts
-    ]
+    booked_intervals = [BookedInterval(start_at=a.start_at, end_at=a.end_at, status=a.status) for a in db_appts]
 
     generated = generate_slots_for_date(
         target_date=target_date,
@@ -228,9 +221,7 @@ def update_doctor_schedule_and_profile(
     payload: UpdateDoctorAvailabilityRequest,
 ) -> None:
     """Update doctor slot duration and weekly availability windows."""
-    user = db.scalar(
-        select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value)
-    )
+    user = db.scalar(select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value))
     if not user or not user.doctor_profile:
         raise AppError(
             status_code=404,
@@ -340,6 +331,29 @@ def unblock_doctor_leave_date(
             status_code=404,
             code="LEAVE_NOT_FOUND",
             message=f"No leave record found for date {leave_date}.",
+        )
+
+    db.delete(leave)
+    db.commit()
+
+
+def unblock_doctor_leave_by_id(
+    db: Session,
+    doctor_id: int,
+    leave_id: int,
+) -> None:
+    """Remove a previously blocked leave by its ID."""
+    leave = db.scalar(
+        select(DoctorLeave).where(
+            DoctorLeave.id == leave_id,
+            DoctorLeave.doctor_id == doctor_id,
+        )
+    )
+    if not leave:
+        raise AppError(
+            status_code=404,
+            code="LEAVE_NOT_FOUND",
+            message=f"No leave record found with ID {leave_id}.",
         )
 
     db.delete(leave)

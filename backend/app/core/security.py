@@ -130,3 +130,20 @@ def require_role(*allowed_roles: str):
 # Role-specific shortcut dependencies
 require_patient = require_role(UserRole.PATIENT.value)
 require_doctor = require_role(UserRole.DOCTOR.value)
+
+
+def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(http_bearer),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """Optional authentication dependency: returns User if valid Bearer token provided, None otherwise."""
+    if not credentials or not credentials.credentials:
+        return None
+    try:
+        payload = decode_access_token(credentials.credentials)
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+        return db.scalar(select(User).where(User.id == int(user_id)))
+    except Exception:
+        return None

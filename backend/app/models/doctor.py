@@ -96,9 +96,7 @@ class DoctorLeave(Base):
     """Specific dates blocked off by a doctor (leaves/holidays)."""
 
     __tablename__ = "doctor_leaves"
-    __table_args__ = (
-        UniqueConstraint("doctor_id", "date", name="uq_doctor_leave_date"),
-    )
+    __table_args__ = (UniqueConstraint("doctor_id", "date", name="uq_doctor_leave_date"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     doctor_id: Mapped[int] = mapped_column(

@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Clock, CheckCircle2, UserX } from 'lucide-react';
 import { api } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
+import { getTodayClinicDate } from '../../utils/dateUtils';
 
 export default function DoctorScheduleByDate() {
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getTodayClinicDate);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);

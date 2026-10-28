@@ -1,24 +1,30 @@
-# Environments and local files
+# Environment and secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+
+# Python virtual environment
 venv/
 .venv/
 env/
 ENV/
 
-# Python
+# Python cache and bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .pytest_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 .mypy_cache/
-.ruff_cache/
 
-# Node
+# Logs and databases
+*.log
+local_pg/
+
+# Node and frontend build
 node_modules/
 dist/
 dist-ssr/

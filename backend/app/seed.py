@@ -4,6 +4,7 @@ Run via:
     python -m app.seed
 """
 
+import os
 from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy import select
@@ -46,7 +47,8 @@ DOCTORS_SEED = [
         "avatar_color": "#8B7FE8",
         "slot_minutes": 30,
         "consultation_fee": 650.00,
-        "days": [0, 1, 2, 3, 4],  # Mon - Fri
+        # Exact requirement: Mon–Sat 10:00–13:00 + 17:00–20:00
+        "days": [0, 1, 2, 3, 4, 5],  # Mon - Sat
         "windows": [(time(10, 0), time(13, 0)), (time(17, 0), time(20, 0))],
     },
     {
@@ -74,7 +76,7 @@ DOCTORS_SEED = [
         "years_of_experience": 9,
         "languages": ["English", "Hindi", "Gujarati"],
         "avatar_color": "#2FB67C",
-        "slot_minutes": 30,
+        "slot_minutes": 15,
         "consultation_fee": 500.00,
         "days": [1, 2, 3, 4, 5, 6],  # Tue - Sun
         "windows": [(time(9, 30), time(13, 0)), (time(16, 0), time(19, 0))],
@@ -99,30 +101,39 @@ PATIENTS_SEED = [
         "phone": "+91 97112 00222",
         "date_of_birth": date(1996, 9, 21),
         "gender": "female",
-        "emergency_contact_name": "Sunil Iyer (Father)",
+        "emergency_contact_name": "Subramanian Iyer (Father)",
         "emergency_contact_phone": "+91 97112 00888",
-        "patient_notes": "Annual dermatology checkup history.",
+        "patient_notes": "Routine wellness checks. Regular follow-up for contact lens intolerance.",
         "avatar_color": "#8B7FE8",
     },
     {
         "email": "vikram.patient@example.com",
-        "full_name": "Vikram Malhotra",
+        "full_name": "Vikram Patel",
         "phone": "+91 97113 00333",
-        "date_of_birth": date(1988, 11, 3),
+        "date_of_birth": date(1985, 3, 30),
         "gender": "male",
-        "emergency_contact_name": "Pooja Malhotra (Sister)",
+        "emergency_contact_name": "Pooja Patel (Spouse)",
         "emergency_contact_phone": "+91 97113 00777",
-        "patient_notes": None,
+        "patient_notes": "Hypertension under control with low-dose ACE inhibitor. Requires periodic lipid panels.",
         "avatar_color": "#FF8A5B",
     },
 ]
 
 
-def seed_database(db: Session) -> None:
-    """Execute idempotent database seeding."""
-    print("[SEED] Starting database seed...")
+def seed_database(db: Session, force_production: bool = False) -> None:
+    """Seed seed data idempotently. Refuses in production without explicit flag."""
+    is_production = os.environ.get("ENVIRONMENT", "").lower() == "production" or os.environ.get("RENDER", "") == "true"
+    allow_flag = os.environ.get("ALLOW_PRODUCTION_SEED", "").lower() in ("true", "1", "yes")
 
-    # 1. Seed Doctors & Availability
+    if is_production and not (allow_flag or force_production):
+        raise RuntimeError(
+            "Refusing to execute seed script in a PRODUCTION environment without explicit "
+            "ALLOW_PRODUCTION_SEED=true environment variable."
+        )
+
+    print("\n[*] Starting idempotent clinic database seeding...")
+
+    # 1. Seed Doctors & Profiles
     created_doctors: dict[str, User] = {}
     for doc_data in DOCTORS_SEED:
         doc = db.scalar(select(User).where(User.email == doc_data["email"]))
@@ -133,15 +144,17 @@ def seed_database(db: Session) -> None:
                 full_name=doc_data["full_name"],
                 role=UserRole.DOCTOR.value,
                 phone=doc_data["phone"],
-                avatar_color=doc_data.get("avatar_color", "#0E9AA7"),
+                avatar_color=doc_data["avatar_color"],
             )
             db.add(doc)
             db.flush()
             print(f"  + Created Doctor: {doc.full_name} ({doc.email})")
         else:
-            doc.avatar_color = doc_data.get("avatar_color", "#0E9AA7")
+            doc.full_name = doc_data["full_name"]
+            doc.phone = doc_data["phone"]
+            doc.avatar_color = doc_data["avatar_color"]
 
-        created_doctors[doc.email] = doc
+        created_doctors[doc_data["email"]] = doc
 
         # Profile
         profile = db.scalar(select(DoctorProfile).where(DoctorProfile.user_id == doc.id))
@@ -164,12 +177,11 @@ def seed_database(db: Session) -> None:
             profile.languages = doc_data.get("languages", [])
             profile.bio = doc_data["bio"]
             profile.consultation_fee = doc_data["consultation_fee"]
+            profile.slot_minutes = doc_data["slot_minutes"]
             db.flush()
 
-        # Rules
-        existing_rules = db.scalars(
-            select(AvailabilityRule).where(AvailabilityRule.doctor_id == doc.id)
-        ).all()
+        # Availability rules
+        existing_rules = db.scalars(select(AvailabilityRule).where(AvailabilityRule.doctor_id == doc.id)).all()
         if not existing_rules:
             for day in doc_data["days"]:
                 for start_t, end_t in doc_data["windows"]:
@@ -218,7 +230,7 @@ def seed_database(db: Session) -> None:
 
     # 3. Seed One Doctor Leave Day for Dr. Priya Nair
     priya = created_doctors["dr.nair@clinic.com"]
-    leave_date = (datetime.now(timezone.utc).astimezone(settings.tz) + timedelta(days=3)).date()
+    leave_date = (datetime.now(timezone.utc).astimezone(settings.tz) + timedelta(days=5)).date()
     existing_leave = db.scalar(
         select(DoctorLeave).where(
             DoctorLeave.doctor_id == priya.id,
@@ -236,96 +248,154 @@ def seed_database(db: Session) -> None:
 
     db.commit()
 
-    # 4. Seed sample appointments (Past and Upcoming)
+    # 4. Seed sample appointments (Past completed/no-show/cancelled, one today, several upcoming)
     rohan = created_patients["rohan.patient@example.com"]
     ananya = created_patients["ananya.patient@example.com"]
+    vikram = created_patients["vikram.patient@example.com"]
     dr_sharma = created_doctors["dr.sharma@clinic.com"]
+    dr_nair = created_doctors["dr.nair@clinic.com"]
     dr_kothari = created_doctors["dr.kothari@clinic.com"]
 
     now_clinic = datetime.now(timezone.utc).astimezone(settings.tz)
-    tomorrow = (now_clinic + timedelta(days=1)).date()
+    today = now_clinic.date()
     yesterday = (now_clinic - timedelta(days=1)).date()
+    day_before = (now_clinic - timedelta(days=2)).date()
+    three_days_ago = (now_clinic - timedelta(days=3)).date()
+    tomorrow = (now_clinic + timedelta(days=1)).date()
+    in_2_days = (now_clinic + timedelta(days=2)).date()
+    in_3_days = (now_clinic + timedelta(days=3)).date()
 
-    # Upcoming appointment 1: Rohan with Dr. Sharma tomorrow at 10:00 AM IST
+    # Appointment 1: Past COMPLETED yesterday (Rohan with Dr. Sharma)
+    past_comp_local = datetime.combine(yesterday, time(10, 0), tzinfo=settings.tz)
+    past_comp_utc = past_comp_local.astimezone(timezone.utc)
+    if not db.scalar(
+        select(Appointment).where(Appointment.doctor_id == dr_sharma.id, Appointment.start_at == past_comp_utc)
+    ):
+        db.add(
+            Appointment(
+                patient_id=rohan.id,
+                doctor_id=dr_sharma.id,
+                start_at=past_comp_utc,
+                end_at=past_comp_utc + timedelta(minutes=15),
+                status=AppointmentStatus.COMPLETED.value,
+                reason="Blood pressure review and annual physical examination",
+            )
+        )
+
+    # Appointment 2: Past NO-SHOW two days ago (Ananya with Dr. Nair)
+    past_ns_local = datetime.combine(day_before, time(11, 0), tzinfo=settings.tz)
+    past_ns_utc = past_ns_local.astimezone(timezone.utc)
+    if not db.scalar(
+        select(Appointment).where(Appointment.doctor_id == dr_nair.id, Appointment.start_at == past_ns_utc)
+    ):
+        db.add(
+            Appointment(
+                patient_id=ananya.id,
+                doctor_id=dr_nair.id,
+                start_at=past_ns_utc,
+                end_at=past_ns_utc + timedelta(minutes=30),
+                status=AppointmentStatus.NO_SHOW.value,
+                reason="Skin rash consultation - patient did not arrive",
+            )
+        )
+
+    # Appointment 3: Past CANCELLED three days ago (Vikram with Dr. Kothari)
+    past_canc_local = datetime.combine(three_days_ago, time(11, 30), tzinfo=settings.tz)
+    past_canc_utc = past_canc_local.astimezone(timezone.utc)
+    if not db.scalar(
+        select(Appointment).where(Appointment.doctor_id == dr_kothari.id, Appointment.start_at == past_canc_utc)
+    ):
+        db.add(
+            Appointment(
+                patient_id=vikram.id,
+                doctor_id=dr_kothari.id,
+                start_at=past_canc_utc,
+                end_at=past_canc_utc + timedelta(minutes=30),
+                status=AppointmentStatus.CANCELLED.value,
+                reason="Rescheduled by patient due to urgent travel",
+                cancelled_at=past_canc_utc - timedelta(days=1),
+                cancelled_by=vikram.id,
+            )
+        )
+
+    # Appointment 4: ONE TODAY (Vikram with Dr. Sharma at 17:00 IST today)
+    today_local = datetime.combine(today, time(17, 0), tzinfo=settings.tz)
+    today_utc = today_local.astimezone(timezone.utc)
+    if not db.scalar(
+        select(Appointment).where(Appointment.doctor_id == dr_sharma.id, Appointment.start_at == today_utc)
+    ):
+        db.add(
+            Appointment(
+                patient_id=vikram.id,
+                doctor_id=dr_sharma.id,
+                start_at=today_utc,
+                end_at=today_utc + timedelta(minutes=15),
+                status=AppointmentStatus.BOOKED.value,
+                reason="Follow-up on seasonal fever and prescription renewal",
+            )
+        )
+
+    # Appointment 5: Upcoming tomorrow (Rohan with Dr. Sharma at 10:00 IST)
     up1_local = datetime.combine(tomorrow, time(10, 0), tzinfo=settings.tz)
     up1_utc = up1_local.astimezone(timezone.utc)
-    up1_end_utc = up1_utc + timedelta(minutes=15)
-
-    existing_up1 = db.scalar(
-        select(Appointment).where(
-            Appointment.doctor_id == dr_sharma.id,
-            Appointment.start_at == up1_utc,
+    if not db.scalar(select(Appointment).where(Appointment.doctor_id == dr_sharma.id, Appointment.start_at == up1_utc)):
+        db.add(
+            Appointment(
+                patient_id=rohan.id,
+                doctor_id=dr_sharma.id,
+                start_at=up1_utc,
+                end_at=up1_utc + timedelta(minutes=15),
+                status=AppointmentStatus.BOOKED.value,
+                reason="Persistent dry cough checkup",
+            )
         )
-    )
-    if not existing_up1:
-        appt1 = Appointment(
-            patient_id=rohan.id,
-            doctor_id=dr_sharma.id,
-            start_at=up1_utc,
-            end_at=up1_end_utc,
-            status=AppointmentStatus.BOOKED.value,
-            reason="Seasonal allergies and persistent cough checkup",
-        )
-        db.add(appt1)
 
-    # Upcoming appointment 2: Ananya with Dr. Kothari tomorrow at 11:00 AM IST
-    up2_local = datetime.combine(tomorrow, time(11, 0), tzinfo=settings.tz)
+    # Appointment 6: Upcoming in 2 days (Ananya with Dr. Kothari at 11:00 IST)
+    up2_local = datetime.combine(in_2_days, time(11, 0), tzinfo=settings.tz)
     up2_utc = up2_local.astimezone(timezone.utc)
-    up2_end_utc = up2_utc + timedelta(minutes=30)
+    if not db.scalar(
+        select(Appointment).where(Appointment.doctor_id == dr_kothari.id, Appointment.start_at == up2_utc)
+    ):
+        db.add(
+            Appointment(
+                patient_id=ananya.id,
+                doctor_id=dr_kothari.id,
+                start_at=up2_utc,
+                end_at=up2_utc + timedelta(minutes=30),
+                status=AppointmentStatus.BOOKED.value,
+                reason="Routine cardiovascular health screening and ECG evaluation",
+            )
+        )
 
-    existing_up2 = db.scalar(
-        select(Appointment).where(
-            Appointment.doctor_id == dr_kothari.id,
-            Appointment.start_at == up2_utc,
+    # Appointment 7: Upcoming in 3 days (Vikram with Dr. Nair at 10:30 IST)
+    up3_local = datetime.combine(in_3_days, time(10, 30), tzinfo=settings.tz)
+    up3_utc = up3_local.astimezone(timezone.utc)
+    if not db.scalar(select(Appointment).where(Appointment.doctor_id == dr_nair.id, Appointment.start_at == up3_utc)):
+        db.add(
+            Appointment(
+                patient_id=vikram.id,
+                doctor_id=dr_nair.id,
+                start_at=up3_utc,
+                end_at=up3_utc + timedelta(minutes=30),
+                status=AppointmentStatus.BOOKED.value,
+                reason="Allergy patch testing and dermatology consultation",
+            )
         )
-    )
-    if not existing_up2:
-        appt2 = Appointment(
-            patient_id=ananya.id,
-            doctor_id=dr_kothari.id,
-            start_at=up2_utc,
-            end_at=up2_end_utc,
-            status=AppointmentStatus.BOOKED.value,
-            reason="Routine cardiovascular health screening and ECG evaluation",
-        )
-        db.add(appt2)
-
-    # Past completed appointment: Rohan with Dr. Sharma yesterday at 11:00 AM IST
-    past_local = datetime.combine(yesterday, time(11, 0), tzinfo=settings.tz)
-    past_utc = past_local.astimezone(timezone.utc)
-    past_end_utc = past_utc + timedelta(minutes=15)
-
-    existing_past = db.scalar(
-        select(Appointment).where(
-            Appointment.doctor_id == dr_sharma.id,
-            Appointment.start_at == past_utc,
-        )
-    )
-    if not existing_past:
-        appt_past = Appointment(
-            patient_id=rohan.id,
-            doctor_id=dr_sharma.id,
-            start_at=past_utc,
-            end_at=past_end_utc,
-            status=AppointmentStatus.COMPLETED.value,
-            reason="Blood pressure review and annual physical examination",
-        )
-        db.add(appt_past)
 
     db.commit()
     print("[OK] Database seeding completed successfully!\n")
 
     # Print Demo Logins Table
-    print("=" * 70)
+    print("=" * 80)
     print("DEMO CREDENTIALS TABLE")
-    print("=" * 70)
-    print(f"{'Role':<10} | {'Full Name':<20} | {'Email':<28} | {'Password'}")
-    print("-" * 70)
+    print("=" * 80)
+    print(f"{'Role':<10} | {'Full Name':<22} | {'Email':<30} | {'Password'}")
+    print("-" * 80)
     for doc in DOCTORS_SEED:
-        print(f"{'DOCTOR':<10} | {doc['full_name']:<20} | {doc['email']:<28} | {DEMO_PASSWORD}")
+        print(f"{'DOCTOR':<10} | {doc['full_name']:<22} | {doc['email']:<30} | {DEMO_PASSWORD}")
     for pat in PATIENTS_SEED:
-        print(f"{'PATIENT':<10} | {pat['full_name']:<20} | {pat['email']:<28} | {DEMO_PASSWORD}")
-    print("=" * 70)
+        print(f"{'PATIENT':<10} | {pat['full_name']:<22} | {pat['email']:<30} | {DEMO_PASSWORD}")
+    print("=" * 80)
 
 
 def main():

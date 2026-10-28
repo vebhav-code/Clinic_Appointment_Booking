@@ -39,9 +39,7 @@ def _to_appointment_response(appt: Appointment, now_utc: datetime) -> Appointmen
         doctor_id=appt.doctor_id,
         doctor_name=appt.doctor.full_name if appt.doctor else "Unknown",
         doctor_speciality=(
-            appt.doctor.doctor_profile.speciality
-            if appt.doctor and appt.doctor.doctor_profile
-            else "General"
+            appt.doctor.doctor_profile.speciality if appt.doctor and appt.doctor.doctor_profile else "General"
         ),
         start_at=appt.start_at,
         end_at=appt.end_at,
@@ -79,9 +77,7 @@ def book_appointment(
         start_at = start_at.astimezone(timezone.utc)
 
     # Check doctor existence and profile
-    doctor = db.scalar(
-        select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value)
-    )
+    doctor = db.scalar(select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value))
     if not doctor or not doctor.doctor_profile:
         raise AppError(
             status_code=404,
@@ -116,8 +112,13 @@ def book_appointment(
         local_start = start_at.astimezone(settings.tz).time()
         local_end = end_at.astimezone(settings.tz).time()
         is_aligned_window = any(
-            w.start_time <= local_start and local_end <= w.end_time
-            and (datetime.combine(target_date, local_start) - datetime.combine(target_date, w.start_time)).total_seconds() % (slot_minutes * 60) == 0
+            w.start_time <= local_start
+            and local_end <= w.end_time
+            and (
+                datetime.combine(target_date, local_start) - datetime.combine(target_date, w.start_time)
+            ).total_seconds()
+            % (slot_minutes * 60)
+            == 0
             for w in windows
         )
         if is_aligned_window:
@@ -199,6 +200,7 @@ def cancel_appointment(
             joinedload(Appointment.doctor).joinedload(User.doctor_profile),
         )
         .where(Appointment.id == appointment_id)
+        .with_for_update(of=Appointment)
     )
     if not appt:
         raise AppError(
@@ -265,6 +267,7 @@ def reschedule_appointment(
             joinedload(Appointment.doctor).joinedload(User.doctor_profile),
         )
         .where(Appointment.id == appointment_id)
+        .with_for_update(of=Appointment)
     )
     if not old_appt:
         raise AppError(
@@ -391,6 +394,7 @@ def update_doctor_appointment_status(
             joinedload(Appointment.doctor).joinedload(User.doctor_profile),
         )
         .where(Appointment.id == appointment_id)
+        .with_for_update(of=Appointment)
     )
     if not appt:
         raise AppError(
@@ -542,9 +546,7 @@ def generate_appointment_ics(db: Session, appointment_id: int, user_id: int) -> 
     end_str = appt.end_at.strftime("%Y%m%dT%H%M%SZ")
     doctor_name = appt.doctor.full_name if appt.doctor else "Doctor"
     speciality = (
-        appt.doctor.doctor_profile.speciality
-        if appt.doctor and appt.doctor.doctor_profile
-        else "General Consultation"
+        appt.doctor.doctor_profile.speciality if appt.doctor and appt.doctor.doctor_profile else "General Consultation"
     )
     patient_name = appt.patient.full_name if appt.patient else "Patient"
     reason = appt.reason or "Clinical Consultation"
@@ -568,4 +570,3 @@ def generate_appointment_ics(db: Session, appointment_id: int, user_id: int) -> 
         "END:VCALENDAR",
     ]
     return "\r\n".join(lines) + "\r\n"
-

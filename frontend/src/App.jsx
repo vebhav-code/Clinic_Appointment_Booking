@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 
 // Pages
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import DoctorsList from './pages/DoctorsList';
@@ -17,7 +18,6 @@ import DoctorLeaves from './pages/doctor/DoctorLeaves';
 import DoctorScheduleByDate from './pages/doctor/DoctorScheduleByDate';
 import NotFound from './pages/NotFound';
 
-// App Layout that displays Navbar when user is authenticated
 function AppLayout() {
   const { isAuthenticated } = useAuth();
 
@@ -26,37 +26,18 @@ function AppLayout() {
       {isAuthenticated && <Navbar />}
       <main style={{ flex: 1 }}>
         <Routes>
+          {/* Landing / Root */}
+          <Route path="/" element={<HomeRoute />} />
+
           {/* Public Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Root Redirect based on authentication & role */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <RootRedirect />
-              </ProtectedRoute>
-            }
-          />
+          {/* Doctor Directory & Slots (Publicly browseable) */}
+          <Route path="/doctors" element={<DoctorsList />} />
+          <Route path="/doctors/:id" element={<DoctorDetail />} />
 
-          {/* Patient Routes */}
-          <Route
-            path="/doctors"
-            element={
-              <ProtectedRoute allowedRoles={['patient', 'doctor']}>
-                <DoctorsList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/doctors/:id"
-            element={
-              <ProtectedRoute allowedRoles={['patient']}>
-                <DoctorDetail />
-              </ProtectedRoute>
-            }
-          />
+          {/* Patient Authenticated Routes */}
           <Route
             path="/my-appointments"
             element={
@@ -66,7 +47,7 @@ function AppLayout() {
             }
           />
 
-          {/* Doctor Routes */}
+          {/* Doctor Authenticated Routes */}
           <Route
             path="/doctor/today"
             element={
@@ -108,12 +89,15 @@ function AppLayout() {
   );
 }
 
-function RootRedirect() {
-  const { role } = useAuth();
-  if (role === 'doctor') {
-    return <Navigate to="/doctor/today" replace />;
+function HomeRoute() {
+  const { isAuthenticated, role } = useAuth();
+  if (isAuthenticated) {
+    if (role === 'doctor') {
+      return <Navigate to="/doctor/today" replace />;
+    }
+    return <Navigate to="/doctors" replace />;
   }
-  return <Navigate to="/doctors" replace />;
+  return <Landing />;
 }
 
 export default function App() {

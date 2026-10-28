@@ -20,6 +20,7 @@ from app.core.errors import AppError
 @dataclass(frozen=True)
 class TimeWindow:
     """Window of availability for a weekday."""
+
     start_time: time
     end_time: time
 
@@ -27,6 +28,7 @@ class TimeWindow:
 @dataclass(frozen=True)
 class BookedInterval:
     """Existing appointment interval in UTC."""
+
     start_at: datetime
     end_at: datetime
     status: str
@@ -35,6 +37,7 @@ class BookedInterval:
 @dataclass
 class GeneratedSlot:
     """Generated free slot in UTC and clinic local time."""
+
     start_at: datetime
     end_at: datetime
     local_start: str
@@ -109,10 +112,7 @@ def generate_slots_for_date(
     cutoff_utc = now_utc + buffer_delta
 
     # Filter out active appointments that overlap with target date
-    active_appointments = [
-        appt for appt in existing_appointments
-        if appt.status in ("booked", "completed", "no_show")
-    ]
+    active_appointments = [appt for appt in existing_appointments if appt.status in ("booked", "completed", "no_show")]
 
     generated_slots: list[GeneratedSlot] = []
 
@@ -137,8 +137,7 @@ def generate_slots_for_date(
 
             # Drop slots overlapping any existing active appointment
             overlaps = any(
-                current_slot_start < appt.end_at and current_slot_end > appt.start_at
-                for appt in active_appointments
+                current_slot_start < appt.end_at and current_slot_end > appt.start_at for appt in active_appointments
             )
 
             if not overlaps:

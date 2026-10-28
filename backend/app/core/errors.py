@@ -12,6 +12,7 @@ logger = logging.getLogger("clinic_api")
 
 class ErrorBody(BaseModel):
     """Inner error payload structure."""
+
     code: str
     message: str
     fields: dict[str, str] | None = None
@@ -19,6 +20,7 @@ class ErrorBody(BaseModel):
 
 class StandardErrorResponse(BaseModel):
     """Consistent standard JSON error envelope: {"error": {"code": "...", "message": "...", "fields": {...}}}."""
+
     error: ErrorBody
 
 
@@ -45,13 +47,17 @@ def create_error_response(
     message: str,
     fields: dict[str, str] | None = None,
 ) -> JSONResponse:
-    """Build a standard error JSONResponse."""
+    """Build a standard error JSONResponse providing both root keys and nested error envelope."""
+    clean_fields = fields if fields is not None else {}
     payload = {
+        "code": code,
+        "message": message,
+        "fields": clean_fields,
         "error": {
             "code": code,
             "message": message,
-            "fields": fields if fields is not None else {},
-        }
+            "fields": clean_fields,
+        },
     }
     return JSONResponse(status_code=status_code, content=payload)
 

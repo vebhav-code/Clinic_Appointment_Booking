@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { api, ApiError } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import { addDaysInClinicTimezone, formatClinicFullDate, formatClinicTime, getTodayClinicDate } from '../utils/dateUtils';
 
 export default function MyAppointments() {
   const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming' | 'past'
@@ -73,9 +74,7 @@ export default function MyAppointments() {
   const openRescheduleModal = (appt) => {
     setReschedulingAppt(appt);
     setSelectedNewSlot(null);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setRescheduleDate(tomorrow.toISOString().split('T')[0]);
+    setRescheduleDate(addDaysInClinicTimezone(new Date(), 1));
   };
 
   // Load slots when rescheduleDate or doctor changes
@@ -411,29 +410,35 @@ export default function MyAppointments() {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
+              background: 'rgba(15, 23, 42, 0.72)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 1000,
               padding: '1rem',
             }}
+            onClick={() => setCancellingAppt(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
-                maxWidth: '440px',
-                background: 'var(--color-white)',
-                border: '1px solid var(--color-black)',
+                maxWidth: '460px',
+                background: '#ffffff',
+                backgroundColor: '#ffffff',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-default)',
                 padding: '2rem',
-                boxShadow: '6px 6px 0 0 #000000',
+                boxShadow: 'var(--shadow-modal)',
               }}
             >
-              <h3 style={{ marginBottom: '0.75rem' }}>Cancel Appointment</h3>
-              <p style={{ fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+              <h3 style={{ marginBottom: '0.75rem', fontSize: '1.35rem' }}>Cancel Appointment</h3>
+              <p style={{ fontSize: '0.9rem', marginBottom: '1.25rem', lineHeight: 1.5 }}>
                 Are you sure you want to cancel your consultation with{' '}
                 <strong>{cancellingAppt.doctor_name}</strong> scheduled for{' '}
                 <strong>{formatDate(cancellingAppt.start_at)}</strong> at{' '}
@@ -472,25 +477,31 @@ export default function MyAppointments() {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
+              background: 'rgba(15, 23, 42, 0.72)',
+              backdropFilter: 'blur(5px)',
+              WebkitBackdropFilter: 'blur(5px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 1000,
               padding: '1rem',
             }}
+            onClick={() => setReschedulingAppt(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              onClick={(e) => e.stopPropagation()}
               style={{
                 width: '100%',
                 maxWidth: '520px',
-                background: 'var(--color-white)',
-                border: '1px solid var(--color-black)',
+                background: '#ffffff',
+                backgroundColor: '#ffffff',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-default)',
                 padding: '2rem',
-                boxShadow: '8px 8px 0 0 #000000',
+                boxShadow: 'var(--shadow-modal)',
                 maxHeight: '90vh',
                 overflowY: 'auto',
               }}
@@ -504,12 +515,14 @@ export default function MyAppointments() {
                 }}
               >
                 <div>
-                  <span className="mono-label">[ATOMIC RESCHEDULE]</span>
-                  <h3 style={{ marginTop: '0.2rem' }}>Reschedule Appointment</h3>
+                  <span className="mono-label" style={{ color: 'var(--color-teal-700)', fontWeight: 700 }}>
+                    [ATOMIC RESCHEDULE]
+                  </span>
+                  <h3 style={{ marginTop: '0.2rem', fontSize: '1.35rem' }}>Reschedule Appointment</h3>
                 </div>
                 <button
                   onClick={() => setReschedulingAppt(null)}
-                  style={{ background: 'none', border: 'none', minHeight: 'auto', padding: 0 }}
+                  style={{ background: 'none', border: 'none', minHeight: 'auto', padding: '0.25rem', cursor: 'pointer', color: 'var(--text-muted)' }}
                 >
                   <X size={20} />
                 </button>
@@ -518,14 +531,16 @@ export default function MyAppointments() {
               <div
                 style={{
                   fontSize: '0.85rem',
-                  padding: '0.75rem',
-                  background: 'var(--color-gray-50)',
-                  border: '1px solid var(--border-color)',
+                  padding: '1rem',
+                  background: 'var(--color-slate-50)',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
                   marginBottom: '1.25rem',
                 }}
               >
                 <div><strong>Doctor:</strong> {reschedulingAppt.doctor_name} ({reschedulingAppt.doctor_speciality})</div>
-                <div><strong>Current:</strong> {formatDate(reschedulingAppt.start_at)} at {formatTime(reschedulingAppt.start_at)}</div>
+                <div style={{ marginTop: '0.25rem' }}><strong>Current:</strong> {formatDate(reschedulingAppt.start_at)} at {formatTime(reschedulingAppt.start_at)}</div>
               </div>
 
               {/* Date Input */}
@@ -533,7 +548,7 @@ export default function MyAppointments() {
                 <label className="form-label">Select New Date</label>
                 <input
                   type="date"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={getTodayClinicDate()}
                   value={rescheduleDate}
                   onChange={(e) => setRescheduleDate(e.target.value)}
                   className="form-input mono"
