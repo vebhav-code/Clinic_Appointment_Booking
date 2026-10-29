@@ -1,8 +1,7 @@
 /**
  * API Client for PulseClinic backend with automatic JWT attachment and standard error normalization.
  */
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+import { API_BASE_URL } from '../config';
 
 export class ApiError extends Error {
   constructor(status, code, message, fields = {}) {

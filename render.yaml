@@ -27,8 +27,10 @@ services:
         value: "1440"
       - key: JWT_SECRET
         generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://clinic-appointment-booking-ten.vercel.app,http://localhost:5173
       - key: FRONTEND_ORIGIN
-        value: https://pulseclinic.vercel.app,http://localhost:5173
+        value: https://clinic-appointment-booking-ten.vercel.app,http://localhost:5173
       - key: EMAIL_REMINDERS_ENABLED
         value: "false"
 

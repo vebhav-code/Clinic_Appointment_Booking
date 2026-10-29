@@ -12,6 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_DIR = BACKEND_DIR.parent
 ROOT_ENV_FILE = ROOT_DIR / ".env"
+BACKEND_ENV_FILE = BACKEND_DIR / ".env"
 
 
 def normalize_database_url(url: str) -> str:
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     """Clinic appointment booking application settings."""
 
     model_config = SettingsConfigDict(
-        env_file=ROOT_ENV_FILE,
+        env_file=(ROOT_ENV_FILE, BACKEND_ENV_FILE),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -70,6 +71,22 @@ class Settings(BaseSettings):
     FRONTEND_ORIGIN: str = Field(
         default="http://localhost:5173",
         description="Allowed frontend origin for CORS",
+    )
+    ALLOWED_ORIGINS: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173,https://clinic-appointment-booking-ten.vercel.app",
+        description="Comma-separated allowed frontend origins for CORS",
+    )
+    HOST: str = Field(
+        default="0.0.0.0",
+        description="Host to bind the server to",
+    )
+    PORT: int = Field(
+        default=8000,
+        description="Port to bind the server to",
+    )
+    GEMINI_API_KEY: str | None = Field(
+        default=None,
+        description="Optional Gemini API key from environment",
     )
     CANCEL_CUTOFF_HOURS: int = Field(
         default=2,
@@ -136,6 +153,39 @@ class Settings(BaseSettings):
     def tz(self) -> ZoneInfo:
         """Return the parsed ZoneInfo object for the clinic timezone."""
         return ZoneInfo(self.CLINIC_TIMEZONE)
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Return parsed list of allowed CORS origins without trailing slashes.
+
+        Reads from ALLOWED_ORIGINS (or fallback FRONTEND_ORIGIN), stripping
+        whitespace and trailing slashes. Guarantees that the local frontend origin
+        and the production Vercel frontend origin are both accepted.
+        """
+        raw_list: list[str] = []
+        if self.ALLOWED_ORIGINS:
+            raw_list.extend(self.ALLOWED_ORIGINS.split(","))
+        if self.FRONTEND_ORIGIN:
+            raw_list.extend(self.FRONTEND_ORIGIN.split(","))
+
+        origins: list[str] = []
+        for origin in raw_list:
+            cleaned = origin.strip().rstrip("/")
+            if cleaned and cleaned not in origins:
+                origins.append(cleaned)
+
+        # Ensure both the local frontend and production Vercel frontend are allowed
+        defaults = [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://clinic-appointment-booking-ten.vercel.app",
+        ]
+        for def_origin in defaults:
+            cleaned_def = def_origin.rstrip("/")
+            if cleaned_def not in origins:
+                origins.append(cleaned_def)
+
+        return origins
 
 
 settings = Settings()

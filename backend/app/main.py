@@ -28,11 +28,8 @@ app = FastAPI(
 # Register centralized standard error handlers
 register_error_handlers(app)
 
-# CORS Configuration
-origins = [origin.strip() for origin in settings.FRONTEND_ORIGIN.split(",") if origin.strip()]
-for dev_host in ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"]:
-    if dev_host not in origins:
-        origins.append(dev_host)
+# CORS Configuration: allows configured origins (local development and production Vercel frontend)
+origins = settings.cors_origins
 
 app.add_middleware(
     CORSMiddleware,
@@ -75,3 +72,13 @@ def root():
         "health": "/health",
         "api_v1": "/api/v1",
     }
+
+
+if __name__ == "__main__":
+    import os
+
+    import uvicorn
+
+    host = os.getenv("HOST", settings.HOST)
+    port = int(os.getenv("PORT", str(settings.PORT)))
+    uvicorn.run("app.main:app", host=host, port=port, reload=True)

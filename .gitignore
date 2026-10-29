@@ -2,6 +2,10 @@
 .env
 .env.*
 !.env.example
+!backend/.env.example
+!frontend/.env.development
+!frontend/.env.production
+!frontend/.env.example
 
 # Python virtual environment
 venv/
