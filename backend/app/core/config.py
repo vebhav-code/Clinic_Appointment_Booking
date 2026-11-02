@@ -2,7 +2,7 @@
 
 import socket
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, unquote, urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, field_validator
@@ -19,14 +19,32 @@ def normalize_database_url(url: str) -> str:
     """Normalize PostgreSQL connection URL to use psycopg (v3) driver.
 
     Converts `postgres://` or `postgresql://` to `postgresql+psycopg://`.
+    Safely URL-encodes passwords containing special characters (such as `@`).
     """
     if not url:
         return url
-    if url.startswith("postgres://"):
-        return "postgresql+psycopg://" + url[len("postgres://") :]
-    if url.startswith("postgresql://"):
-        return "postgresql+psycopg://" + url[len("postgresql://") :]
-    return url
+
+    prefix = ""
+    for p in ("postgresql+psycopg://", "postgres://", "postgresql://"):
+        if url.startswith(p):
+            prefix = p
+            rest = url[len(p) :]
+            break
+    if not prefix:
+        return url
+
+    # If credentials contain unencoded '@', safely quote password so it is not mistaken for host delimiter
+    if "@" in rest:
+        parts = rest.split("@")
+        if len(parts) > 2:
+            creds = "@".join(parts[:-1])
+            host_part = parts[-1]
+            if ":" in creds:
+                user, pw = creds.split(":", 1)
+                pw_encoded = quote(unquote(pw), safe="")
+                rest = f"{user}:{pw_encoded}@{host_part}"
+
+    return "postgresql+psycopg://" + rest
 
 
 class Settings(BaseSettings):
