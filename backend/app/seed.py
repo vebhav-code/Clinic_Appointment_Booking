@@ -81,6 +81,126 @@ DOCTORS_SEED = [
         "days": [1, 2, 3, 4, 5, 6],  # Tue - Sun
         "windows": [(time(9, 30), time(13, 0)), (time(16, 0), time(19, 0))],
     },
+    {
+        "email": "dr.mukherjee@clinic.com",
+        "full_name": "Dr. Rohan Mukherjee",
+        "phone": "+91 98205 55667",
+        "speciality": "Orthopedic Surgeon",
+        "bio": "Specialist in trauma surgery, sports medicine, arthroscopy, and robotic joint reconstructions.",
+        "qualifications": "MBBS, MS (Orthopedics), MCh (Joint Replacement)",
+        "years_of_experience": 16,
+        "languages": ["English", "Hindi", "Bengali"],
+        "avatar_color": "#4A90E2",
+        "slot_minutes": 30,
+        "consultation_fee": 800.00,
+        "days": [0, 1, 2, 3, 4],  # Mon - Fri
+        "windows": [(time(10, 0), time(13, 30)), (time(16, 0), time(19, 0))],
+    },
+    {
+        "email": "dr.reddy@clinic.com",
+        "full_name": "Dr. Sunita Reddy",
+        "phone": "+91 98206 66778",
+        "speciality": "Gynecologist",
+        "bio": "Experienced obstetrician and laparoscopic surgeon specializing in high-risk pregnancies and reproductive endocrinology.",
+        "qualifications": "MBBS, MS (Obstetrics & Gynecology), FICOG",
+        "years_of_experience": 15,
+        "languages": ["English", "Hindi", "Telugu", "Kannada"],
+        "avatar_color": "#D0021B",
+        "slot_minutes": 30,
+        "consultation_fee": 700.00,
+        "days": [0, 1, 2, 3, 4, 5],  # Mon - Sat
+        "windows": [(time(9, 0), time(13, 0)), (time(17, 0), time(19, 30))],
+    },
+    {
+        "email": "dr.singhania@clinic.com",
+        "full_name": "Dr. Vikram Singhania",
+        "phone": "+91 98207 77889",
+        "speciality": "Neurologist",
+        "bio": "Senior neuro-physician with special clinical focus on stroke therapy, epilepsy management, migraine disorders, and neuropathy.",
+        "qualifications": "MBBS, MD (Medicine), DM (Neurology)",
+        "years_of_experience": 14,
+        "languages": ["English", "Hindi", "Urdu"],
+        "avatar_color": "#7ED321",
+        "slot_minutes": 30,
+        "consultation_fee": 950.00,
+        "days": [0, 1, 2, 3, 4],  # Mon - Fri
+        "windows": [(time(11, 0), time(14, 0)), (time(17, 30), time(20, 30))],
+    },
+    {
+        "email": "dr.sengupta@clinic.com",
+        "full_name": "Dr. Ananya Sengupta",
+        "phone": "+91 98208 88990",
+        "speciality": "Psychiatrist",
+        "bio": "Consultant neuropsychiatrist addressing clinical depression, adult ADHD, anxiety management, and psychotherapy.",
+        "qualifications": "MBBS, MD (Psychiatry), MRCPsych",
+        "years_of_experience": 11,
+        "languages": ["English", "Hindi", "Bengali"],
+        "avatar_color": "#BD10E0",
+        "slot_minutes": 30,
+        "consultation_fee": 750.00,
+        "days": [1, 2, 3, 4, 5],  # Tue - Sat
+        "windows": [(time(10, 0), time(13, 0)), (time(15, 30), time(19, 0))],
+    },
+    {
+        "email": "dr.qureshi@clinic.com",
+        "full_name": "Dr. Farhan Qureshi",
+        "phone": "+91 98209 99001",
+        "speciality": "ENT Specialist",
+        "bio": "ENT surgeon specializing in endoscopic sinus surgery, micro-ear reconstruction, pediatric airway care, and balance disorders.",
+        "qualifications": "MBBS, MS (ENT - Otorhinolaryngology)",
+        "years_of_experience": 13,
+        "languages": ["English", "Hindi", "Urdu", "Marathi"],
+        "avatar_color": "#50E3C2",
+        "slot_minutes": 15,
+        "consultation_fee": 550.00,
+        "days": [0, 1, 2, 3, 4, 5],  # Mon - Sat
+        "windows": [(time(9, 30), time(13, 0)), (time(16, 30), time(19, 30))],
+    },
+    {
+        "email": "dr.joshi@clinic.com",
+        "full_name": "Dr. Kavita Joshi",
+        "phone": "+91 98210 00112",
+        "speciality": "Ophthalmologist",
+        "bio": "Cataract and refractive surgeon with extensive surgical mastery in Phacoemulsification, glaucoma lasers, and computer vision syndrome.",
+        "qualifications": "MBBS, MS (Ophthalmology), FICO (UK)",
+        "years_of_experience": 17,
+        "languages": ["English", "Hindi", "Marathi"],
+        "avatar_color": "#F5A623",
+        "slot_minutes": 15,
+        "consultation_fee": 600.00,
+        "days": [0, 1, 2, 3, 4, 5],  # Mon - Sat
+        "windows": [(time(10, 0), time(13, 30)), (time(17, 0), time(20, 0))],
+    },
+    {
+        "email": "dr.banerjee@clinic.com",
+        "full_name": "Dr. Amitav Banerjee",
+        "phone": "+91 98211 11223",
+        "speciality": "Gastroenterologist",
+        "bio": "Therapeutic endoscopist specializing in inflammatory bowel disease (IBD), liver cirrhosis, acid peptic disorders, and pancreatic disease.",
+        "qualifications": "MBBS, MD, DM (Medical Gastroenterology)",
+        "years_of_experience": 19,
+        "languages": ["English", "Hindi", "Bengali"],
+        "avatar_color": "#9013FE",
+        "slot_minutes": 30,
+        "consultation_fee": 850.00,
+        "days": [0, 1, 2, 3, 4],  # Mon - Fri
+        "windows": [(time(10, 0), time(14, 0)), (time(18, 0), time(21, 0))],
+    },
+    {
+        "email": "dr.kapoor@clinic.com",
+        "full_name": "Dr. Neha Kapoor",
+        "phone": "+91 98212 22334",
+        "speciality": "Pulmonologist",
+        "bio": "Chest physician treating chronic asthma, COPD, sleep apnea, post-COVID pulmonary fibrosis, and respiratory allergies.",
+        "qualifications": "MBBS, MD (Pulmonary Medicine), FCCP",
+        "years_of_experience": 10,
+        "languages": ["English", "Hindi", "Punjabi"],
+        "avatar_color": "#B8E986",
+        "slot_minutes": 30,
+        "consultation_fee": 650.00,
+        "days": [0, 1, 2, 3, 4, 5],  # Mon - Sat
+        "windows": [(time(9, 0), time(12, 30)), (time(16, 0), time(19, 0))],
+    },
 ]
 
 PATIENTS_SEED = [
@@ -172,12 +292,14 @@ def seed_database(db: Session, force_production: bool = False) -> None:
             )
             db.add(profile)
         else:
+            profile.speciality = doc_data["speciality"]
             profile.qualifications = doc_data.get("qualifications")
             profile.years_of_experience = doc_data.get("years_of_experience")
             profile.languages = doc_data.get("languages", [])
             profile.bio = doc_data["bio"]
             profile.consultation_fee = doc_data["consultation_fee"]
             profile.slot_minutes = doc_data["slot_minutes"]
+            profile.is_active = True
             db.flush()
 
         # Availability rules

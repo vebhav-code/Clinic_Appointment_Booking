@@ -37,13 +37,62 @@ def get_all_doctors(
         .where(User.role == UserRole.DOCTOR.value, DoctorProfile.is_active.is_(True))
     )
 
-    if speciality:
-        query = query.where(func.lower(DoctorProfile.speciality) == speciality.strip().lower())
+    if speciality and speciality.strip().lower() != "all":
+        clean_spec = speciality.strip().lower()
+        if clean_spec in ("ent", "ent specialist", "otorhinolaryngology"):
+            query = query.where(
+                (func.lower(DoctorProfile.speciality) == "ent specialist")
+                | (func.lower(DoctorProfile.speciality) == "ent")
+                | func.lower(DoctorProfile.speciality).like("ent %")
+                | func.lower(DoctorProfile.speciality).like("% ent%")
+                | func.lower(DoctorProfile.speciality).like("%otorhinolaryngology%")
+            )
+        else:
+            root_map = {
+                "cardiologist": "cardio",
+                "cardiology": "cardio",
+                "dermatologist": "dermat",
+                "dermatology": "dermat",
+                "pediatrician": "pediatr",
+                "pediatrics": "pediatr",
+                "neurologist": "neuro",
+                "neurology": "neuro",
+                "orthopedist": "ortho",
+                "orthopedic": "ortho",
+                "orthopedics": "ortho",
+                "orthopedic surgeon": "ortho",
+                "psychiatrist": "psych",
+                "psychiatry": "psych",
+                "gynecologist": "gynec",
+                "gynecology": "gynec",
+                "ophthalmologist": "ophthalm",
+                "ophthalmology": "ophthalm",
+                "gastroenterologist": "gastro",
+                "gastroenterology": "gastro",
+                "pulmonologist": "pulmon",
+                "pulmonology": "pulmon",
+                "general physician": "physician",
+                "general medicine": "general",
+            }
+            stem = root_map.get(clean_spec)
+            if stem:
+                query = query.where(
+                    (func.lower(DoctorProfile.speciality) == clean_spec)
+                    | func.lower(DoctorProfile.speciality).like(f"%{stem}%")
+                )
+            else:
+                query = query.where(
+                    (func.lower(DoctorProfile.speciality) == clean_spec)
+                    | func.lower(DoctorProfile.speciality).like(f"%{clean_spec}%")
+                )
 
-    if search:
+    if search and search.strip():
         search_term = f"%{search.strip().lower()}%"
         query = query.where(
-            func.lower(User.full_name).like(search_term) | func.lower(DoctorProfile.speciality).like(search_term)
+            func.lower(User.full_name).like(search_term)
+            | func.lower(DoctorProfile.speciality).like(search_term)
+            | func.lower(DoctorProfile.bio).like(search_term)
+            | func.lower(DoctorProfile.qualifications).like(search_term)
         )
 
     query = query.order_by(User.full_name)

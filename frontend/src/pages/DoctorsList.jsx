@@ -11,6 +11,14 @@ const SPECIALITIES = [
   'Dermatologist',
   'Cardiologist',
   'Pediatrician',
+  'Orthopedic Surgeon',
+  'Gynecologist',
+  'Neurologist',
+  'Psychiatrist',
+  'ENT Specialist',
+  'Ophthalmologist',
+  'Gastroenterologist',
+  'Pulmonologist',
 ];
 
 export default function DoctorsList() {

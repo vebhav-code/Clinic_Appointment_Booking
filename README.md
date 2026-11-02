@@ -13,14 +13,22 @@ A production-grade full-stack clinic appointment booking platform engineered fro
 
 ## 🔑 Demo Logins Table
 
-The database seed command (`python -m app.seed`) pre-populates 4 doctors across diverse medical specialities and 3 patients with relative appointments and scheduled leaves:
+The database seed command (`python -m app.seed`) pre-populates 12 doctors across diverse medical specialities and 3 patients with relative appointments and scheduled leaves:
 
 | Role | Name | Email | Speciality & Weekly Schedule | Demo Password |
 | :--- | :--- | :--- | :--- | :--- |
-| **DOCTOR** | Dr. Arvind Sharma | `dr.sharma@clinic.com` | General Physician (15-min slots, Mon–Fri 09:00–13:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Priya Nair | `dr.nair@clinic.com` | Dermatologist (30-min slots, Mon–Sat 10:00–13:00 + 17:00–20:00, Future Leave) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Rajesh Kothari | `dr.kothari@clinic.com` | Cardiologist (30-min slots, Tue/Thu/Sat 14:00–18:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Meera Desai | `dr.desai@clinic.com` | Pediatrician (30-min slots, Mon–Fri 09:30–12:30 + 16:00–18:30) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Arvind Sharma | `dr.sharma@clinic.com` | General Physician (15-min slots, Mon–Sat 09:00–12:30 & 16:30–19:30) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Priya Nair | `dr.nair@clinic.com` | Dermatologist (30-min slots, Mon–Sat 10:00–13:00 & 17:00–20:00) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Rajesh Kothari | `dr.kothari@clinic.com` | Cardiologist (30-min slots, Mon–Sat 10:30–13:30 & 18:00–21:00) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Meera Desai | `dr.desai@clinic.com` | Pediatrician (15-min slots, Tue–Sun 09:30–13:00 & 16:00–19:00) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Rohan Mukherjee | `dr.mukherjee@clinic.com` | Orthopedic Surgeon (30-min slots, Mon–Fri 10:00–13:30 & 16:00–19:00) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Sunita Reddy | `dr.reddy@clinic.com` | Gynecologist (30-min slots, Mon–Sat 09:00–13:00 & 17:00–19:30) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Vikram Singhania | `dr.singhania@clinic.com` | Neurologist (30-min slots, Mon–Fri 11:00–14:00 & 17:30–20:30) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Ananya Sengupta | `dr.sengupta@clinic.com` | Psychiatrist (30-min slots, Tue–Sat 10:00–13:00 & 15:30–19:00) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Farhan Qureshi | `dr.qureshi@clinic.com` | ENT Specialist (15-min slots, Mon–Sat 09:30–13:00 & 16:30–19:30) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Kavita Joshi | `dr.joshi@clinic.com` | Ophthalmologist (15-min slots, Mon–Sat 10:00–13:30 & 17:00–20:00) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Amitav Banerjee | `dr.banerjee@clinic.com` | Gastroenterologist (30-min slots, Mon–Fri 10:00–14:00 & 18:00–21:00) | `DemoPassword123!` |
+| **DOCTOR** | Dr. Neha Kapoor | `dr.kapoor@clinic.com` | Pulmonologist (30-min slots, Mon–Sat 09:00–12:30 & 16:00–19:00) | `DemoPassword123!` |
 | **PATIENT** | Rohan Verma | `rohan.patient@example.com` | Patient with upcoming & past visits | `DemoPassword123!` |
 | **PATIENT** | Ananya Iyer | `ananya.patient@example.com` | Patient with upcoming visit | `DemoPassword123!` |
 | **PATIENT** | Vikram Patel | `vikram.patient@example.com` | New patient account | `DemoPassword123!` |
