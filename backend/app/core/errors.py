@@ -131,4 +131,4 @@ def register_error_handlers(app: FastAPI) -> None:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Vary"] = "Origin"
-        return response
+        return response

@@ -278,6 +278,25 @@ python -m app.send_reminders
 
 ---
 
+### Step 6: Production Deployment (Render)
+
+When deploying the backend web service to **Render**, configure the service settings as follows (or use the provided [`render.yaml`](file:///d:/Booking_System/render.yaml) Blueprint):
+
+* **Root Directory:** `backend`
+* **Build Command:** `pip install -r requirements.txt`
+* **Start Command:**
+  ```bash
+  alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+  ```
+  *(Running `alembic upgrade head` before `uvicorn` guarantees that all migrations, including missing columns such as `email_reminder_sent_at`, are applied automatically before accepting incoming traffic).*
+* **Environment Variables:**
+  * `DATABASE_URL`: PostgreSQL connection string (e.g. from Render PostgreSQL).
+  * `ALLOWED_ORIGINS`: Comma-separated allowed frontend origins (e.g. `https://clinic-appointment-booking-ten.vercel.app,http://localhost:5173`).
+  * `CLINIC_TIMEZONE`: `Asia/Kolkata`
+  * `JWT_SECRET`: Random 64-character secret string.
+
+---
+
 ## 📡 API Overview Summary Table
 
 All endpoints are versioned under `/api/v1`:
