@@ -7,6 +7,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from app.core.config import settings
+
 logger = logging.getLogger("clinic_api")
 
 
@@ -117,8 +119,16 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled server exception: %s", exc)
-        return create_error_response(
+        response = create_error_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             code="INTERNAL_SERVER_ERROR",
             message="An unexpected server error occurred. Please try again later.",
         )
+        # 500s are produced outside CORSMiddleware, so add CORS headers here; otherwise the
+        # browser hides the real 500 and the frontend shows a fake "cannot connect" error.
+        origin = request.headers.get("origin")
+        if origin and origin.rstrip("/") in settings.cors_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Vary"] = "Origin"
+        return response
