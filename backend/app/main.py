@@ -62,9 +62,9 @@ def health_check():
         "timezone": settings.CLINIC_TIMEZONE,
     }
 
-@app.head("/api/health")
-def health_head():
-    return Response(status_code=200)
+@app.api_route("/health", methods=["GET", "HEAD"])
+def health():
+    return {"status": "ok"}
 
 
 @app.get("/", tags=["Root"])
