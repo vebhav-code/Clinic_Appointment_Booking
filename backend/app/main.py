@@ -62,6 +62,10 @@ def health_check():
         "timezone": settings.CLINIC_TIMEZONE,
     }
 
+@app.head("/api/health")
+def health_head():
+    return Response(status_code=200)
+
 
 @app.get("/", tags=["Root"])
 def root():
