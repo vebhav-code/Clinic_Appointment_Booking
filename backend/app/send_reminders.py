@@ -14,9 +14,16 @@ Behavior:
 
 import logging
 import smtplib
+import sys
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from pathlib import Path
+
+# Ensure backend directory is in sys.path when executed directly or from root
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload

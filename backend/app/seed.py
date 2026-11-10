@@ -5,7 +5,14 @@ Run via:
 """
 
 import os
+import sys
 from datetime import date, datetime, time, timedelta, timezone
+from pathlib import Path
+
+# Ensure backend directory is in sys.path when executed directly or from root
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session

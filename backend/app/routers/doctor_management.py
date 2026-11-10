@@ -119,6 +119,11 @@ def delete_leave_by_id(
 
 
 @router.get(
+    "/today",
+    response_model=list[AppointmentResponse],
+    summary="Get today's schedule of appointments for logged-in doctor (alias)",
+)
+@router.get(
     "/appointments/today",
     response_model=list[AppointmentResponse],
     summary="Get today's schedule of appointments for logged-in doctor",

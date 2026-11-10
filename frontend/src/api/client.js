@@ -118,6 +118,26 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ new_start_at: newStartAt, reason }),
       }),
+    downloadIcs: async (appointmentId) => {
+      const token = localStorage.getItem('pulse_auth_token');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}/ics`, { headers });
+      if (!response.ok) {
+        throw new ApiError(response.status, 'DOWNLOAD_FAILED', 'Failed to download calendar (.ics) file.');
+      }
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', `appointment-${appointmentId}.ics`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    },
   },
 
   // Doctor Management (Doctor only)

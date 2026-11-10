@@ -1,7 +1,14 @@
 """FastAPI application entrypoint with health check, CORS, routers, and exception handlers."""
 
+import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
+
+# Ensure backend directory is in sys.path when running main.py directly or from root
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.errors import register_error_handlers
 from app.routers import appointments, auth, doctor_management, doctors, profile, reminders
+
 
 
 @asynccontextmanager
@@ -40,6 +48,7 @@ origins = settings.cors_origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins or ["*"],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -87,4 +96,4 @@ if __name__ == "__main__":
 
     host = os.getenv("HOST", settings.HOST)
     port = int(os.getenv("PORT", str(settings.PORT)))
-    uvicorn.run("app.main:app", host=host, port=port, reload=True)
+    uvicorn.run("app.main:app", host=host, port=port, reload=True, app_dir=str(BACKEND_DIR))

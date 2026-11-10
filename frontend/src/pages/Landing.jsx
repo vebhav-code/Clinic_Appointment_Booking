@@ -5,10 +5,9 @@ import {
   Clock,
   ShieldCheck,
   Bell,
-  UserCheck,
   ArrowRight,
-  Sparkles,
-  Stethoscope,
+  Search,
+  CalendarCheck,
   CheckCircle2,
   Lock,
 } from 'lucide-react';
@@ -16,7 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export default function Landing() {
-  const { isAuthenticated, user, role, login } = useAuth();
+  const { isAuthenticated, role, login } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useToast();
 
@@ -31,82 +30,23 @@ export default function Landing() {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top Navigation */}
-      <header
+    <div style={{ backgroundColor: 'var(--bg-primary)', minHeight: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column' }}>
+      {/* Hero Section */}
+      <section
         style={{
+          padding: '5rem 0 4rem',
+          background: 'linear-gradient(180deg, #ffffff 0%, var(--bg-primary) 100%)',
           borderBottom: '1px solid var(--border-subtle)',
-          backgroundColor: '#ffffff',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
         }}
       >
-        <div
-          className="container"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            height: '70px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-primary-600)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Stethoscope size={20} />
-            </div>
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-              Pulse<span style={{ color: 'var(--color-primary-600)' }}>Clinic</span>
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {isAuthenticated ? (
-              <Link
-                to={role === 'doctor' ? '/doctor/today' : '/doctors'}
-                className="btn-primary"
-                style={{ textDecoration: 'none' }}
-              >
-                Dashboard ({role}) <ArrowRight size={16} />
-              </Link>
-            ) : (
-              <>
-                <Link to="/doctors" className="btn-outline" style={{ textDecoration: 'none' }}>
-                  Browse Doctors
-                </Link>
-                <Link to="/login" className="btn-secondary" style={{ textDecoration: 'none' }}>
-                  Sign In
-                </Link>
-                <Link to="/register" className="btn-primary" style={{ textDecoration: 'none' }}>
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section style={{ padding: '4rem 0 3.5rem', background: 'linear-gradient(180deg, #ffffff 0%, var(--bg-primary) 100%)' }}>
-        <div className="container" style={{ textAlign: 'center', maxWidth: '840px' }}>
+        <div className="container" style={{ textAlign: 'center', maxWidth: '780px' }}>
           <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.5rem',
+              gap: '0.45rem',
               padding: '0.35rem 0.85rem',
-              borderRadius: '9999px',
+              borderRadius: 'var(--radius-full)',
               backgroundColor: 'var(--color-primary-50)',
               border: '1px solid var(--color-primary-200)',
               color: 'var(--color-primary-800)',
@@ -115,47 +55,176 @@ export default function Landing() {
               marginBottom: '1.5rem',
             }}
           >
-            <ShieldCheck size={16} color="var(--color-primary-600)" />
-            Zero Double-Booking Guarantee • Real-Time Concurrency Protection
+            <ShieldCheck size={16} style={{ color: 'var(--color-primary-600)' }} aria-hidden="true" />
+            <span>Zero Double-Booking Guarantee • Clinic Timezone Enforced</span>
           </div>
 
-          <h1 style={{ marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
-            Clinic Appointments, Engineered for Certainty
+          <h1
+            style={{
+              fontSize: 'clamp(2rem, 4.5vw, 3rem)',
+              fontWeight: 800,
+              lineHeight: 1.2,
+              color: 'var(--text-primary)',
+              margin: '0 0 1.25rem',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Clinic Appointments, Engineered with Certainty
           </h1>
 
-          <p style={{ fontSize: '1.15rem', lineHeight: '1.6', color: 'var(--text-secondary)', marginBottom: '2.25rem' }}>
-            Book verified doctors with live slot availability, atomic reschedule guarantees, and guaranteed concurrency
-            protection backed by PostgreSQL database exclusion constraints.
+          <p
+            style={{
+              fontSize: '1.15rem',
+              lineHeight: 1.6,
+              color: 'var(--text-secondary)',
+              margin: '0 0 2.25rem',
+            }}
+          >
+            Book verified specialists with real-time slot generation, atomic reschedule safety, and database exclusion constraints that eliminate double bookings.
           </p>
 
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/doctors" className="btn-primary" style={{ textDecoration: 'none', fontSize: '1.05rem', padding: '0.75rem 1.75rem' }}>
-              Find a Doctor & Book <ArrowRight size={18} />
-            </Link>
-            <Link to="/register" className="btn-secondary" style={{ textDecoration: 'none', fontSize: '1.05rem', padding: '0.75rem 1.75rem' }}>
-              Patient Self-Registration
+          {/* Single Clear CTA */}
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Link
+              to="/doctors"
+              className="btn-primary"
+              style={{
+                textDecoration: 'none',
+                fontSize: '1.05rem',
+                padding: '0.85rem 2.25rem',
+                minHeight: '48px',
+                borderRadius: 'var(--radius-md)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                boxShadow: 'var(--shadow-md)',
+              }}
+            >
+              <span>Find a Doctor</span>
+              <ArrowRight size={18} aria-hidden="true" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Quick Demo Credentials Section */}
-      <section style={{ padding: '2.5rem 0 3.5rem' }}>
+      {/* 3-Step "How It Works" Section */}
+      <section style={{ padding: '4.5rem 0', backgroundColor: '#ffffff', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="container">
+          <div style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 3rem' }}>
+            <span className="section-label">Seamless Booking</span>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0.25rem 0 0.5rem', color: 'var(--text-primary)' }}>
+              How PulseClinic Works
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: 0 }}>
+              Three straightforward steps to secure your clinical consultation.
+            </p>
+          </div>
+
           <div
             style={{
-              background: '#ffffff',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-lg)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '2rem',
+            }}
+          >
+            {/* Step 1 */}
+            <div className="card" style={{ padding: '2rem 1.75rem', position: 'relative' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-primary-50)',
+                  color: 'var(--color-primary-700)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <Search size={24} aria-hidden="true" />
+              </div>
+              <span className="section-label">Step 1</span>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0.2rem 0 0.5rem', color: 'var(--text-primary)' }}>
+                Find Your Specialist
+              </h3>
+              <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                Browse qualified doctors filtered by speciality, consultation fee, and next available opening across 14 upcoming days.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="card" style={{ padding: '2rem 1.75rem', position: 'relative' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-primary-50)',
+                  color: 'var(--color-primary-700)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <Clock size={24} aria-hidden="true" />
+              </div>
+              <span className="section-label">Step 2</span>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0.2rem 0 0.5rem', color: 'var(--text-primary)' }}>
+                Select Real-Time Slot
+              </h3>
+              <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                Pick from live Morning, Afternoon, or Evening slots computed in the clinic timezone, automatically accounting for leaves.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="card" style={{ padding: '2rem 1.75rem', position: 'relative' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--color-primary-50)',
+                  color: 'var(--color-primary-700)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '1.25rem',
+                }}
+              >
+                <CalendarCheck size={24} aria-hidden="true" />
+              </div>
+              <span className="section-label">Step 3</span>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0.2rem 0 0.5rem', color: 'var(--text-primary)' }}>
+                Confirmed & Protected
+              </h3>
+              <p style={{ fontSize: '0.925rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                Instant confirmation with .ics calendar download, automated 1-hour in-app reminders, and free changes up to 2 hours prior.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Demo Credentials Section */}
+      <section style={{ padding: '3.5rem 0 4.5rem' }}>
+        <div className="container">
+          <div
+            className="card"
+            style={{
               padding: '2rem',
               boxShadow: 'var(--shadow-md)',
             }}
           >
             <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-              <span className="mono-label">ONE-CLICK DEMO ACCESS</span>
-              <h2 style={{ fontSize: '1.4rem', marginTop: '0.3rem' }}>Try PulseClinic with Seeded Accounts</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                Click any persona below to log in instantly and test doctor or patient workflows.
+              <span className="section-label">Quick Evaluation</span>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0.2rem 0 0.35rem', color: 'var(--text-primary)' }}>
+                Try PulseClinic with Demo Accounts
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+                Click any persona below to sign in instantly and evaluate patient or clinician workflows.
               </p>
             </div>
 
@@ -169,23 +238,36 @@ export default function Landing() {
                   backgroundColor: 'var(--color-slate-50)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span className="badge badge-booked">DOCTOR</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>15m slots</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'var(--color-primary-100)',
+                      color: 'var(--color-primary-800)',
+                    }}
+                  >
+                    Doctor
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>15m slots</span>
                 </div>
-                <h4 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Dr. Arvind Sharma</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-primary-700)', fontWeight: 600, marginBottom: '0.75rem' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.15rem' }}>Dr. Arvind Sharma</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-primary-700)', fontWeight: 600, margin: '0 0 0.5rem' }}>
                   General Physician
                 </p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  Schedule: Mon–Sat 09:00–12:30 & 16:30–19:30
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+                  Mon–Sat 09:00–12:30 & 16:30–19:30
                 </p>
                 <button
+                  type="button"
                   onClick={() => handleQuickLogin('dr.sharma@clinic.com', 'DemoPassword123!', '/doctor/today')}
-                  className="btn-primary"
-                  style={{ width: '100%', fontSize: '0.85rem' }}
+                  className="btn-primary btn-sm"
+                  style={{ width: '100%' }}
                 >
-                  Login as Dr. Sharma
+                  Sign In as Dr. Sharma
                 </button>
               </div>
 
@@ -198,23 +280,36 @@ export default function Landing() {
                   backgroundColor: 'var(--color-slate-50)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span className="badge badge-booked">DOCTOR</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>30m slots</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'var(--color-primary-100)',
+                      color: 'var(--color-primary-800)',
+                    }}
+                  >
+                    Doctor
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>30m slots</span>
                 </div>
-                <h4 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Dr. Priya Nair</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-primary-700)', fontWeight: 600, marginBottom: '0.75rem' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.15rem' }}>Dr. Priya Nair</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-primary-700)', fontWeight: 600, margin: '0 0 0.5rem' }}>
                   Dermatologist
                 </p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  Schedule: Mon–Sat 10:00–13:00 & 17:00–20:00
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+                  Mon–Sat 10:00–13:00 & 17:00–20:00
                 </p>
                 <button
+                  type="button"
                   onClick={() => handleQuickLogin('dr.nair@clinic.com', 'DemoPassword123!', '/doctor/today')}
-                  className="btn-primary"
-                  style={{ width: '100%', fontSize: '0.85rem' }}
+                  className="btn-primary btn-sm"
+                  style={{ width: '100%' }}
                 >
-                  Login as Dr. Nair
+                  Sign In as Dr. Nair
                 </button>
               </div>
 
@@ -227,23 +322,35 @@ export default function Landing() {
                   backgroundColor: 'var(--color-slate-50)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span className="badge badge-completed">PATIENT</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Active</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'var(--color-slate-200)',
+                      color: 'var(--color-slate-800)',
+                    }}
+                  >
+                    Patient
+                  </span>
                 </div>
-                <h4 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Rohan Verma</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.15rem' }}>Rohan Verma</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>
                   rohan.patient@example.com
                 </p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  Has upcoming and completed appointments to test tabs.
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+                  Upcoming and completed visits to test tabs
                 </p>
                 <button
+                  type="button"
                   onClick={() => handleQuickLogin('rohan.patient@example.com', 'DemoPassword123!', '/my-appointments')}
-                  className="btn-secondary"
-                  style={{ width: '100%', fontSize: '0.85rem' }}
+                  className="btn-secondary btn-sm"
+                  style={{ width: '100%' }}
                 >
-                  Login as Rohan (Patient)
+                  Sign In as Rohan
                 </button>
               </div>
 
@@ -256,23 +363,35 @@ export default function Landing() {
                   backgroundColor: 'var(--color-slate-50)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span className="badge badge-completed">PATIENT</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Active</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 'var(--radius-full)',
+                      backgroundColor: 'var(--color-slate-200)',
+                      color: 'var(--color-slate-800)',
+                    }}
+                  >
+                    Patient
+                  </span>
                 </div>
-                <h4 style={{ fontSize: '1.05rem', marginBottom: '0.2rem' }}>Ananya Iyer</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.15rem' }}>Ananya Iyer</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.5rem' }}>
                   ananya.patient@example.com
                 </p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                  Has scheduled consultations and history.
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+                  Active consultations and history
                 </p>
                 <button
+                  type="button"
                   onClick={() => handleQuickLogin('ananya.patient@example.com', 'DemoPassword123!', '/my-appointments')}
-                  className="btn-secondary"
-                  style={{ width: '100%', fontSize: '0.85rem' }}
+                  className="btn-secondary btn-sm"
+                  style={{ width: '100%' }}
                 >
-                  Login as Ananya (Patient)
+                  Sign In as Ananya
                 </button>
               </div>
             </div>
@@ -280,62 +399,10 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Core Engineering Features */}
-      <section style={{ padding: '3rem 0 5rem' }}>
-        <div className="container">
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <span className="mono-label">SYSTEM ARCHITECTURE</span>
-            <h2 style={{ marginTop: '0.3rem' }}>Built for Medical-Grade Precision</h2>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-            <div className="card">
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--color-primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
-                <Lock size={22} />
-              </div>
-              <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>PostgreSQL Exclusion Constraints</h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                Enforced by PostgreSQL <code className="mono">btree_gist</code> extension with <code className="mono">EXCLUDE USING gist (doctor_id WITH =, tstzrange(start_at, end_at) WITH &&)</code> and a matching patient constraint. Race conditions return 409 Conflict.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--color-accent-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', color: 'var(--color-accent-600)' }}>
-                <Clock size={22} />
-              </div>
-              <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>Pure Slot Generator</h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                Slots are generated purely on-the-fly from weekday availability windows, slot length (15 or 30 min), leave dates, and active appointments. Trailing partial slots are dropped and past slots are never offered.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--color-primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', color: 'var(--color-primary-600)' }}>
-                <Calendar size={22} />
-              </div>
-              <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>Atomic Reschedule & 2h Cutoff</h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                Reschedule operations cancel the old and book the new in a single database transaction. If the target slot is taken, the old appointment remains safely booked. Blocked within 2 hours of appointment start.
-              </p>
-            </div>
-
-            <div className="card">
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--color-accent-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', color: 'var(--color-accent-600)' }}>
-                <Bell size={22} />
-              </div>
-              <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem' }}>In-App & Email Reminders</h3>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                On-demand in-app reminder bell with unread badge computed within 1 hour of consultation start, plus resilient, idempotent background email reminders via <code className="mono">python -m app.send_reminders</code>.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer style={{ marginTop: 'auto', borderTop: '1px solid var(--border-subtle)', backgroundColor: '#ffffff', padding: '2rem 0' }}>
+      <footer style={{ marginTop: 'auto', borderTop: '1px solid var(--border-subtle)', backgroundColor: '#ffffff', padding: '1.75rem 0' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <p style={{ margin: 0, fontSize: '0.85rem' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             © {new Date().getFullYear()} PulseClinic • FastAPI + React + PostgreSQL
           </p>
           <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.85rem' }}>

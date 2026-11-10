@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, ArrowRight, AlertCircle } from 'lucide-react';
+import {
+  UserPlus,
+  ArrowRight,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Loader2,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ApiError } from '../api/client';
@@ -13,6 +20,7 @@ export default function Register() {
     full_name: '',
     phone: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -68,49 +76,53 @@ export default function Register() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: 'calc(100vh - 64px)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: '2rem 1rem',
-        background: 'var(--color-white)',
+        padding: '2.5rem 1rem',
+        backgroundColor: 'var(--color-slate-50)',
       }}
     >
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.2 }}
+        className="card"
         style={{
           width: '100%',
           maxWidth: '460px',
           margin: '0 auto',
-          border: '1px solid var(--border-color)',
           padding: '2.25rem 2rem',
-          boxShadow: '6px 6px 0 0 #000000',
+          boxShadow: 'var(--shadow-modal)',
         }}
       >
         {/* Header */}
-        <div style={{ marginBottom: '1.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.5rem' }}>
-              PULSE
+        <div style={{ marginBottom: '1.75rem', textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+            <span style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
+              Pulse
             </span>
             <span
-              className="mono"
               style={{
-                fontSize: '0.75rem',
-                padding: '0.15rem 0.4rem',
-                background: 'var(--color-black)',
-                color: 'var(--color-white)',
-                fontWeight: 600,
+                fontSize: '0.72rem',
+                padding: '0.15rem 0.45rem',
+                backgroundColor: 'var(--color-primary-50)',
+                color: 'var(--color-primary-700)',
+                border: '1px solid var(--color-primary-200)',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-sm)',
+                textTransform: 'uppercase',
               }}
             >
-              CLINIC
+              Clinic
             </span>
           </div>
-          <h2>Patient Registration</h2>
-          <p style={{ marginTop: '0.35rem' }}>
-            Create your account to discover doctors, view real-time availability, and book appointments.
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 0.35rem', color: 'var(--text-primary)' }}>
+            Patient Registration
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            Create an account to book consultations and manage clinic visits.
           </p>
         </div>
 
@@ -119,8 +131,10 @@ export default function Register() {
           <div
             style={{
               padding: '0.75rem 1rem',
-              background: 'var(--color-black)',
-              color: 'var(--color-white)',
+              backgroundColor: '#fef2f2',
+              color: '#991b1b',
+              border: '1px solid #fecaca',
+              borderRadius: 'var(--radius-md)',
               marginBottom: '1.25rem',
               display: 'flex',
               alignItems: 'center',
@@ -128,12 +142,12 @@ export default function Register() {
               fontSize: '0.85rem',
             }}
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} aria-hidden="true" />
             <span>{generalError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Full Name */}
           <div className="form-group">
             <label className="form-label" htmlFor="name-input">
@@ -149,6 +163,7 @@ export default function Register() {
               onChange={handleChange}
               className={`form-input ${fieldErrors.full_name ? 'has-error' : ''}`}
               placeholder="e.g. Maya Krishnan"
+              style={{ minHeight: '44px' }}
             />
             {fieldErrors.full_name && (
               <span className="field-error-msg">{fieldErrors.full_name}</span>
@@ -170,28 +185,54 @@ export default function Register() {
               onChange={handleChange}
               className={`form-input ${fieldErrors.email ? 'has-error' : ''}`}
               placeholder="e.g. maya@example.com"
+              style={{ minHeight: '44px' }}
             />
             {fieldErrors.email && (
               <span className="field-error-msg">{fieldErrors.email}</span>
             )}
           </div>
 
-          {/* Password */}
+          {/* Password with Show/Hide toggle */}
           <div className="form-group">
             <label className="form-label" htmlFor="password-input">
               Password (Min 8 Characters)
             </label>
-            <input
-              id="password-input"
-              name="password"
-              type="password"
-              required
-              autoComplete="new-password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`form-input ${fieldErrors.password ? 'has-error' : ''}`}
-              placeholder="••••••••"
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                id="password-input"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="new-password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`form-input ${fieldErrors.password ? 'has-error' : ''}`}
+                placeholder="••••••••"
+                style={{ minHeight: '44px', paddingRight: '44px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '44px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {fieldErrors.password && (
               <span className="field-error-msg">{fieldErrors.password}</span>
             )}
@@ -211,6 +252,7 @@ export default function Register() {
               onChange={handleChange}
               className={`form-input ${fieldErrors.phone ? 'has-error' : ''}`}
               placeholder="+91 98765 43210"
+              style={{ minHeight: '44px' }}
             />
             {fieldErrors.phone && (
               <span className="field-error-msg">{fieldErrors.phone}</span>
@@ -222,14 +264,17 @@ export default function Register() {
             type="submit"
             className="btn-primary"
             disabled={submitting}
-            style={{ width: '100%', marginTop: '0.75rem' }}
+            style={{ width: '100%', minHeight: '44px', marginTop: '0.35rem' }}
           >
             {submitting ? (
-              <span className="mono">[CREATING ACCOUNT...]</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                <span>Creating Account...</span>
+              </div>
             ) : (
               <>
                 <span>Complete Registration</span>
-                <ArrowRight size={16} />
+                <ArrowRight size={16} aria-hidden="true" />
               </>
             )}
           </button>
@@ -248,10 +293,9 @@ export default function Register() {
           <Link
             to="/login"
             style={{
-              color: 'var(--color-black)',
-              fontWeight: 700,
-              textDecoration: 'underline',
-              textUnderlineOffset: '3px',
+              color: 'var(--color-primary-700)',
+              fontWeight: 600,
+              textDecoration: 'none',
             }}
           >
             Sign in

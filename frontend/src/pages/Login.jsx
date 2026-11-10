@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogIn, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import {
+  LogIn,
+  ArrowRight,
+  ShieldCheck,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Loader2,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ApiError } from '../api/client';
@@ -9,6 +17,7 @@ import { ApiError } from '../api/client';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -45,57 +54,63 @@ export default function Login() {
     }
   };
 
-  const handleQuickLogin = (demoEmail, demoRole) => {
+  const handleQuickLogin = (demoEmail) => {
     setEmail(demoEmail);
     setPassword('DemoPassword123!');
+    setFieldErrors({});
+    setGeneralError('');
   };
 
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: 'calc(100vh - 64px)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: '2rem 1rem',
-        background: 'var(--color-white)',
+        padding: '2.5rem 1rem',
+        backgroundColor: 'var(--color-slate-50)',
       }}
     >
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.2 }}
+        className="card"
         style={{
           width: '100%',
-          maxWidth: '460px',
+          maxWidth: '440px',
           margin: '0 auto',
-          border: '1px solid var(--border-color)',
           padding: '2.25rem 2rem',
-          boxShadow: '6px 6px 0 0 #000000',
+          boxShadow: 'var(--shadow-modal)',
         }}
       >
         {/* Header */}
-        <div style={{ marginBottom: '1.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.5rem' }}>
-              PULSE
+        <div style={{ marginBottom: '1.75rem', textAlign: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+            <span style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--text-primary)' }}>
+              Pulse
             </span>
             <span
-              className="mono"
               style={{
-                fontSize: '0.75rem',
-                padding: '0.15rem 0.4rem',
-                background: 'var(--color-black)',
-                color: 'var(--color-white)',
-                fontWeight: 600,
+                fontSize: '0.72rem',
+                padding: '0.15rem 0.45rem',
+                backgroundColor: 'var(--color-primary-50)',
+                color: 'var(--color-primary-700)',
+                border: '1px solid var(--color-primary-200)',
+                fontWeight: 700,
+                borderRadius: 'var(--radius-sm)',
+                textTransform: 'uppercase',
               }}
             >
-              CLINIC
+              Clinic
             </span>
           </div>
-          <h2>Authentication</h2>
-          <p style={{ marginTop: '0.35rem' }}>
-            Sign in to manage appointments, schedules, and clinical consultations.
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, margin: '0 0 0.35rem', color: 'var(--text-primary)' }}>
+            Sign in to your account
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            Manage appointments, schedules, and clinical visits.
           </p>
         </div>
 
@@ -104,8 +119,10 @@ export default function Login() {
           <div
             style={{
               padding: '0.75rem 1rem',
-              background: 'var(--color-black)',
-              color: 'var(--color-white)',
+              backgroundColor: '#fef2f2',
+              color: '#991b1b',
+              border: '1px solid #fecaca',
+              borderRadius: 'var(--radius-md)',
               marginBottom: '1.25rem',
               display: 'flex',
               alignItems: 'center',
@@ -113,12 +130,12 @@ export default function Login() {
               fontSize: '0.85rem',
             }}
           >
-            <AlertCircle size={16} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} aria-hidden="true" />
             <span>{generalError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Email Field */}
           <div className="form-group">
             <label className="form-label" htmlFor="email-input">
@@ -133,27 +150,53 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               className={`form-input ${fieldErrors.email ? 'has-error' : ''}`}
               placeholder="e.g. rohan.patient@example.com"
+              style={{ minHeight: '44px' }}
             />
             {fieldErrors.email && (
               <span className="field-error-msg">{fieldErrors.email}</span>
             )}
           </div>
 
-          {/* Password Field */}
+          {/* Password Field with Show/Hide toggle */}
           <div className="form-group">
             <label className="form-label" htmlFor="password-input">
               Password
             </label>
-            <input
-              id="password-input"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`form-input ${fieldErrors.password ? 'has-error' : ''}`}
-              placeholder="••••••••"
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                id="password-input"
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`form-input ${fieldErrors.password ? 'has-error' : ''}`}
+                placeholder="••••••••"
+                style={{ minHeight: '44px', paddingRight: '44px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '44px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {fieldErrors.password && (
               <span className="field-error-msg">{fieldErrors.password}</span>
             )}
@@ -164,14 +207,17 @@ export default function Login() {
             type="submit"
             className="btn-primary"
             disabled={submitting}
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            style={{ width: '100%', minHeight: '44px', marginTop: '0.25rem' }}
           >
             {submitting ? (
-              <span className="mono">[VERIFYING...]</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                <span>Signing in...</span>
+              </div>
             ) : (
               <>
                 <span>Sign In</span>
-                <ArrowRight size={16} />
+                <ArrowRight size={16} aria-hidden="true" />
               </>
             )}
           </button>
@@ -180,31 +226,40 @@ export default function Login() {
         {/* Quick Demo Logins Bar (Hiring Assignment Evaluator Friendly) */}
         <div
           style={{
-            marginTop: '2rem',
+            marginTop: '1.75rem',
             paddingTop: '1.25rem',
-            borderTop: '1px solid var(--border-color)',
+            borderTop: '1px solid var(--border-subtle)',
           }}
         >
           <div
-            className="mono-label"
-            style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--text-muted)',
+              marginBottom: '0.65rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
           >
-            <ShieldCheck size={14} /> Quick Demo Logins
+            <ShieldCheck size={14} style={{ color: 'var(--color-primary-600)' }} aria-hidden="true" />
+            <span>Quick Demo Logins</span>
           </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
             <button
               type="button"
-              className="btn-outline"
-              style={{ fontSize: '0.75rem', minHeight: '36px', padding: '0.3rem' }}
-              onClick={() => handleQuickLogin('rohan.patient@example.com', 'patient')}
+              className="btn-secondary btn-sm"
+              onClick={() => handleQuickLogin('rohan.patient@example.com')}
             >
               Demo Patient
             </button>
             <button
               type="button"
-              className="btn-outline"
-              style={{ fontSize: '0.75rem', minHeight: '36px', padding: '0.3rem' }}
-              onClick={() => handleQuickLogin('dr.sharma@clinic.com', 'doctor')}
+              className="btn-secondary btn-sm"
+              onClick={() => handleQuickLogin('dr.sharma@clinic.com')}
             >
               Demo Doctor
             </button>
@@ -224,10 +279,9 @@ export default function Login() {
           <Link
             to="/register"
             style={{
-              color: 'var(--color-black)',
-              fontWeight: 700,
-              textDecoration: 'underline',
-              textUnderlineOffset: '3px',
+              color: 'var(--color-primary-700)',
+              fontWeight: 600,
+              textDecoration: 'none',
             }}
           >
             Register as Patient

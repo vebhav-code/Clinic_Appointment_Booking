@@ -171,13 +171,16 @@ class Settings(BaseSettings):
         """
         raw_url = self.DATABASE_URL
         if self.DEV_DATABASE_URL:
-            try:
-                clean_url = raw_url.replace("postgresql+psycopg://", "postgresql://")
-                parsed = urlparse(clean_url)
-                if parsed.hostname:
-                    socket.gethostbyname(parsed.hostname)
-            except (socket.gaierror, OSError):
+            if "dpg-" in raw_url and ".render.com" not in raw_url:
                 raw_url = self.DEV_DATABASE_URL
+            else:
+                try:
+                    clean_url = raw_url.replace("postgresql+psycopg://", "postgresql://")
+                    parsed = urlparse(clean_url)
+                    if parsed.hostname:
+                        socket.gethostbyname(parsed.hostname)
+                except (socket.gaierror, OSError):
+                    raw_url = self.DEV_DATABASE_URL
         return normalize_database_url(raw_url)
 
     @property
@@ -215,6 +218,12 @@ class Settings(BaseSettings):
         defaults = [
             "http://localhost:5173",
             "http://127.0.0.1:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:4173",
+            "http://127.0.0.1:4173",
             "https://clinic-appointment-booking-ten.vercel.app",
         ]
         for def_origin in defaults:
