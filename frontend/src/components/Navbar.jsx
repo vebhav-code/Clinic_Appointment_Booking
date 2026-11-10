@@ -177,9 +177,10 @@ export default function Navbar() {
                     onClick={() => setIsReminderOpen((prev) => !prev)}
                     aria-label="View in-app notifications"
                     style={{
-                      minHeight: '40px',
-                      height: '40px',
-                      width: '40px',
+                      minHeight: '44px',
+                      minWidth: '44px',
+                      height: '44px',
+                      width: '44px',
                       padding: 0,
                       borderRadius: 'var(--radius-sm)',
                       position: 'relative',
@@ -223,8 +224,9 @@ export default function Navbar() {
                         style={{
                           position: 'absolute',
                           right: 0,
-                          top: '48px',
+                          top: '52px',
                           width: '320px',
+                          maxWidth: 'calc(100vw - 2rem)',
                           background: 'var(--color-white)',
                           border: '1px solid var(--border-color)',
                           boxShadow: 'var(--shadow-lg)',
@@ -337,9 +339,10 @@ export default function Navbar() {
                   title="Logout"
                   aria-label="Logout"
                   style={{
-                    minHeight: '40px',
-                    height: '40px',
-                    width: '40px',
+                    minHeight: '44px',
+                    minWidth: '44px',
+                    height: '44px',
+                    width: '44px',
                     padding: 0,
                     borderRadius: 'var(--radius-sm)',
                   }}
@@ -348,18 +351,18 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <Link
                   to="/login"
                   className="btn-outline"
-                  style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.35rem 0.85rem' }}
+                  style={{ fontSize: '0.85rem', minHeight: '44px', padding: '0.5rem 0.95rem' }}
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
                   className="btn-primary"
-                  style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.35rem 0.85rem' }}
+                  style={{ fontSize: '0.85rem', minHeight: '44px', padding: '0.5rem 0.95rem' }}
                 >
                   Register
                 </Link>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Clock, CheckCircle2, UserX } from 'lucide-react';
 import { api } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
-import { getTodayClinicDate } from '../../utils/dateUtils';
+import { getTodayClinicDate, formatClinicTime } from '../../utils/dateUtils';
 
 export default function DoctorScheduleByDate() {
   const [selectedDate, setSelectedDate] = useState(getTodayClinicDate);
@@ -41,14 +41,7 @@ export default function DoctorScheduleByDate() {
     }
   };
 
-  const formatTime = (isoString) => {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
+  const formatTime = (isoString) => formatClinicTime(isoString);
 
   const isFuture = (startAtIso) => {
     return new Date(startAtIso).getTime() > Date.now();
@@ -166,24 +159,24 @@ export default function DoctorScheduleByDate() {
                     </div>
 
                     {isBooked && (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <button
                           type="button"
                           className="btn-primary"
                           disabled={inFuture || updatingId === appt.id}
                           onClick={() => handleUpdateStatus(appt.id, 'completed')}
-                          style={{ fontSize: '0.75rem', minHeight: '34px', padding: '0.25rem 0.7rem' }}
+                          style={{ fontSize: '0.8rem', minHeight: '44px', padding: '0.4rem 0.85rem' }}
                         >
-                          <CheckCircle2 size={13} /> Completed
+                          <CheckCircle2 size={15} /> Completed
                         </button>
                         <button
                           type="button"
                           className="btn-danger"
                           disabled={inFuture || updatingId === appt.id}
                           onClick={() => handleUpdateStatus(appt.id, 'no_show')}
-                          style={{ fontSize: '0.75rem', minHeight: '34px', padding: '0.25rem 0.7rem' }}
+                          style={{ fontSize: '0.8rem', minHeight: '44px', padding: '0.4rem 0.85rem' }}
                         >
-                          <UserX size={13} /> No-Show
+                          <UserX size={15} /> No-Show
                         </button>
                       </div>
                     )}

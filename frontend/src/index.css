@@ -186,6 +186,19 @@ p {
   padding: 0 1.25rem;
 }
 
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.875rem;
+  }
+  .modal-content {
+    padding: 1.25rem;
+    max-height: calc(100vh - 1.5rem);
+  }
+  .modal-overlay {
+    padding: 0.75rem;
+  }
+}
+
 @media (min-width: 640px) {
   .container {
     padding: 0 1.75rem;

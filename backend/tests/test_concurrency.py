@@ -329,3 +329,124 @@ def test_role_permissions_enforced(client: TestClient, seed_test_data: dict):
     )
     assert r2.status_code == 403
     assert r2.json()["error"]["code"] == "FORBIDDEN_ROLE"
+
+
+def test_concurrent_reschedule_to_same_slot(client: TestClient, seed_test_data: dict, db: Session):
+    """Two patients attempt to atomically reschedule into the exact same free slot simultaneously.
+
+    Asserts exactly ONE succeeds (200), the other gets 409 Conflict, and the loser's original
+    appointment remains booked and intact.
+    """
+    doc = seed_test_data["doctor"]
+    p1_token = seed_test_data["patient1_token"]
+    p2_token = seed_test_data["patient2_token"]
+
+    future_date = (datetime.now(timezone.utc).astimezone(settings.tz) + timedelta(days=9)).date()
+    slot1_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 0, tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
+    slot2_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 30, tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
+    target_slot_utc = datetime(
+        future_date.year, future_date.month, future_date.day, 11, 0, tzinfo=settings.tz
+    ).astimezone(timezone.utc)
+
+    # Initial bookings
+    r1 = client.post(
+        "/api/v1/appointments",
+        json={"doctor_id": doc.id, "start_at": slot1_utc.isoformat()},
+        headers={"Authorization": f"Bearer {p1_token}"},
+    )
+    assert r1.status_code == 201
+    appt1_id = r1.json()["id"]
+
+    r2 = client.post(
+        "/api/v1/appointments",
+        json={"doctor_id": doc.id, "start_at": slot2_utc.isoformat()},
+        headers={"Authorization": f"Bearer {p2_token}"},
+    )
+    assert r2.status_code == 201
+    appt2_id = r2.json()["id"]
+
+    def make_reschedule_call(args):
+        appt_id, token = args
+        with TestClient(client.app) as c:
+            return c.post(
+                f"/api/v1/appointments/{appt_id}/reschedule",
+                json={"new_start_at": target_slot_utc.isoformat()},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+    reqs = [(appt1_id, p1_token), (appt2_id, p2_token)]
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        responses = list(executor.map(make_reschedule_call, reqs))
+
+    status_codes = [r.status_code for r in responses]
+    assert 200 in status_codes, f"Expected a 200 success, got {status_codes}"
+    assert 409 in status_codes, f"Expected a 409 conflict, got {status_codes}"
+
+    # Determine winner and loser
+    if responses[0].status_code == 200:
+        winner_appt_id, loser_appt_id = appt1_id, appt2_id
+    else:
+        winner_appt_id, loser_appt_id = appt2_id, appt1_id
+
+    db.expire_all()
+    # Winner's original appointment should be cancelled
+    winner_orig = db.scalar(select(Appointment).where(Appointment.id == winner_appt_id))
+    assert winner_orig.status == AppointmentStatus.CANCELLED.value
+
+    # Loser's original appointment MUST remain booked and intact
+    loser_orig = db.scalar(select(Appointment).where(Appointment.id == loser_appt_id))
+    assert loser_orig.status == AppointmentStatus.BOOKED.value
+
+
+def test_patient_cannot_cancel_or_reschedule_another_patients_appointment(
+    client: TestClient,
+    seed_test_data: dict,
+    db: Session,
+):
+    """A patient attempting to cancel or reschedule another patient's appointment is rejected with 403."""
+    doc = seed_test_data["doctor"]
+    p1_token = seed_test_data["patient1_token"]
+    p2_token = seed_test_data["patient2_token"]
+
+    future_date = (datetime.now(timezone.utc).astimezone(settings.tz) + timedelta(days=7)).date()
+    slot1_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 0, tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
+    slot2_utc = datetime(future_date.year, future_date.month, future_date.day, 10, 30, tzinfo=settings.tz).astimezone(
+        timezone.utc
+    )
+
+    # Patient 1 books an appointment
+    r1 = client.post(
+        "/api/v1/appointments",
+        json={"doctor_id": doc.id, "start_at": slot1_utc.isoformat()},
+        headers={"Authorization": f"Bearer {p1_token}"},
+    )
+    assert r1.status_code == 201
+    appt_id = r1.json()["id"]
+
+    # Patient 2 tries to cancel Patient 1's appointment -> 403 Forbidden
+    r_cancel = client.post(
+        f"/api/v1/appointments/{appt_id}/cancel",
+        headers={"Authorization": f"Bearer {p2_token}"},
+    )
+    assert r_cancel.status_code == 403
+    assert r_cancel.json()["error"]["code"] == "FORBIDDEN_APPOINTMENT_ACCESS"
+
+    # Patient 2 tries to reschedule Patient 1's appointment -> 403 Forbidden
+    r_reschedule = client.post(
+        f"/api/v1/appointments/{appt_id}/reschedule",
+        json={"new_start_at": slot2_utc.isoformat()},
+        headers={"Authorization": f"Bearer {p2_token}"},
+    )
+    assert r_reschedule.status_code == 403
+    assert r_reschedule.json()["error"]["code"] == "FORBIDDEN_APPOINTMENT_ACCESS"
+
+    # Verify original appointment is still booked
+    db.expire_all()
+    orig = db.scalar(select(Appointment).where(Appointment.id == appt_id))
+    assert orig.status == AppointmentStatus.BOOKED.value

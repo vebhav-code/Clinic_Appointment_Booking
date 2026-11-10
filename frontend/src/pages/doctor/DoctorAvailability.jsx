@@ -138,8 +138,9 @@ export default function DoctorAvailability() {
     } catch (err) {
       if (err instanceof ApiError) {
         setValidationError(err.message);
+        addToast(err.message, 'error');
       } else {
-        addToast('Failed to save availability', 'error');
+        addToast(err.message || 'Failed to save availability', 'error');
       }
     } finally {
       setSaving(false);
@@ -219,7 +220,7 @@ export default function DoctorAvailability() {
                   })}
                 </div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem' }}>
-                  Existing booked appointments stay intact if duration changes.
+                  Changes will be rejected if existing future booked appointments conflict with the new duration or operating windows.
                 </span>
               </div>
 
@@ -298,9 +299,9 @@ export default function DoctorAvailability() {
                         type="button"
                         onClick={() => handleAddWindow(day.id)}
                         className="btn-outline"
-                        style={{ fontSize: '0.75rem', minHeight: '30px', padding: '0.2rem 0.6rem' }}
+                        style={{ fontSize: '0.8rem', minHeight: '44px', padding: '0.4rem 0.8rem' }}
                       >
-                        <Plus size={13} /> Add Window
+                        <Plus size={14} /> Add Window
                       </button>
                     </div>
 
@@ -327,7 +328,7 @@ export default function DoctorAvailability() {
                                 handleWindowChange(day.id, wIdx, 'start_time', e.target.value)
                               }
                               className="form-input mono"
-                              style={{ width: '130px', minHeight: '36px', padding: '0.3rem 0.5rem' }}
+                              style={{ width: '130px', minHeight: '44px', padding: '0.4rem 0.6rem' }}
                             />
                             <span className="mono" style={{ fontSize: '0.85rem' }}>to</span>
                             <input
@@ -337,16 +338,16 @@ export default function DoctorAvailability() {
                                 handleWindowChange(day.id, wIdx, 'end_time', e.target.value)
                               }
                               className="form-input mono"
-                              style={{ width: '130px', minHeight: '36px', padding: '0.3rem 0.5rem' }}
+                              style={{ width: '130px', minHeight: '44px', padding: '0.4rem 0.6rem' }}
                             />
                             <button
                               type="button"
                               onClick={() => handleRemoveWindow(day.id, wIdx)}
                               className="btn-danger"
                               title="Delete window"
-                              style={{ minHeight: '36px', width: '36px', padding: 0 }}
+                              style={{ minHeight: '44px', minWidth: '44px', width: '44px', padding: 0 }}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         ))}

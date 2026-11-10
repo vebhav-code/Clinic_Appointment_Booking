@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Clock, CheckCircle2, UserX, AlertCircle, Calendar } from 'lucide-react';
 import { api, ApiError } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
+import { formatClinicTime } from '../../utils/dateUtils';
 
 export default function DoctorToday() {
   const [appointments, setAppointments] = useState([]);
@@ -39,14 +40,7 @@ export default function DoctorToday() {
     }
   };
 
-  const formatTime = (isoString) => {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
+  const formatTime = (isoString) => formatClinicTime(isoString);
 
   // Check if appointment start time is in the future
   const isFuture = (startAtIso) => {
@@ -165,9 +159,9 @@ export default function DoctorToday() {
                           className="btn-primary"
                           disabled={inFuture || updatingId === appt.id}
                           onClick={() => handleUpdateStatus(appt.id, 'completed')}
-                          style={{ fontSize: '0.75rem', minHeight: '34px', padding: '0.25rem 0.7rem' }}
+                          style={{ fontSize: '0.8rem', minHeight: '44px', padding: '0.4rem 0.85rem' }}
                         >
-                          <CheckCircle2 size={14} /> Completed
+                          <CheckCircle2 size={15} /> Completed
                         </button>
 
                         <button
@@ -175,9 +169,9 @@ export default function DoctorToday() {
                           className="btn-danger"
                           disabled={inFuture || updatingId === appt.id}
                           onClick={() => handleUpdateStatus(appt.id, 'no_show')}
-                          style={{ fontSize: '0.75rem', minHeight: '34px', padding: '0.25rem 0.7rem' }}
+                          style={{ fontSize: '0.8rem', minHeight: '44px', padding: '0.4rem 0.85rem' }}
                         >
-                          <UserX size={14} /> No-Show
+                          <UserX size={15} /> No-Show
                         </button>
                       </div>
                     )}

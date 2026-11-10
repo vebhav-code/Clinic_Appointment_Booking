@@ -3,7 +3,7 @@
 from datetime import date, datetime, time, timedelta, timezone
 
 from sqlalchemy import or_, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.config import settings
@@ -162,7 +162,7 @@ def book_appointment(
         db.add(new_appointment)
         db.commit()
         db.refresh(new_appointment)
-    except IntegrityError as err:
+    except (IntegrityError, OperationalError) as err:
         db.rollback()
         # Postgres exclusion constraint or unique violation
         raise AppError(
@@ -350,7 +350,7 @@ def reschedule_appointment(
         db.add(new_appt)
         db.commit()
         db.refresh(new_appt)
-    except IntegrityError as err:
+    except (IntegrityError, OperationalError) as err:
         db.rollback()
         raise AppError(
             status_code=409,

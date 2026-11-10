@@ -235,7 +235,7 @@ export default function DoctorDetail() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
             gap: '2rem',
           }}
         >
@@ -284,9 +284,9 @@ export default function DoctorDetail() {
                       onClick={() => setSelectedDate(str)}
                       className={active ? 'btn-primary' : 'btn-outline'}
                       style={{
-                        fontSize: '0.75rem',
-                        minHeight: '32px',
-                        padding: '0.2rem 0.6rem',
+                        fontSize: '0.82rem',
+                        minHeight: '44px',
+                        padding: '0.4rem 0.8rem',
                       }}
                     >
                       {label}
@@ -364,11 +364,7 @@ export default function DoctorDetail() {
               <div>
                 <span className="mono-label">[STEP 2: AVAILABLE SLOTS]</span>
                 <h3 style={{ marginTop: '0.25rem' }}>
-                  {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', {
-                    weekday: 'short',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
+                  {formatClinicFullDate(selectedDate)}
                 </h3>
               </div>
               {slotsData && (
@@ -724,12 +720,13 @@ export default function DoctorDetail() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className="btn-outline"
                   onClick={() => setBookingModalOpen(false)}
                   disabled={submittingBooking}
+                  style={{ minHeight: '44px' }}
                 >
                   Cancel
                 </button>
@@ -738,6 +735,7 @@ export default function DoctorDetail() {
                   className="btn-primary"
                   onClick={handleConfirmBooking}
                   disabled={submittingBooking}
+                  style={{ minHeight: '44px' }}
                 >
                   {submittingBooking ? (
                     <span className="mono">[SECURING SLOT...]</span>

@@ -1,52 +1,171 @@
-# PulseClinic — Precision Clinic Appointment Booking System
+# Clinic Appointment Booking System
 
-A production-grade full-stack clinic appointment booking platform engineered from scratch for high concurrency, zero double-booking guarantees, strict server-side validation, and instant responsive feedback.
-
----
-
-## 🌟 Live Demo & Quick Links
-- **Frontend Web App (Local):** [http://localhost:5173](http://localhost:5173) *(or Vercel deployment)*
-- **Interactive OpenAPI Documentation (Swagger UI):** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **API Health Check Endpoint:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+A full-stack, production-ready clinic appointment booking application engineered for high concurrency, zero double-booking guarantees, strict server-side validation, and timezone-accurate scheduling.
 
 ---
 
-## 🔑 Demo Logins Table
+## 1. Overview & Tech Stack
 
-The database seed command (`python -m app.seed`) pre-populates 12 doctors across diverse medical specialities and 3 patients with relative appointments and scheduled leaves:
+### Overview
+The Clinic Appointment Booking platform provides multi-doctor clinic scheduling with deterministic slot generation, PostgreSQL-backed concurrency controls, atomic rescheduling, doctor leave management, and real-time in-app and background reminders.
 
-| Role | Name | Email | Speciality & Weekly Schedule | Demo Password |
+### Tech Stack
+- **Backend:**
+  - **Framework:** FastAPI (Python 3.11+)
+  - **ORM & Data Layer:** SQLAlchemy 2.0 (declarative mapped columns)
+  - **Migrations:** Alembic
+  - **Database Driver:** `psycopg` (version 3) with connection pooling
+  - **Database:** PostgreSQL 14+ with `btree_gist` extension for exclusion constraints
+  - **Configuration & Validation:** Pydantic v2 & Pydantic-Settings
+  - **Authentication:** OAuth2 password flow with JWT bearer tokens (HS256) and passlib / argon2 hashing
+- **Frontend:**
+  - **Framework & Runtime:** React 19 + Vite
+  - **Routing:** React Router v7
+  - **Animations & Transitions:** Framer Motion
+  - **Icons:** Lucide React
+  - **Styling:** Modern CSS custom properties with responsive flex/grid layouts and accessible touch targets
+
+---
+
+## 2. Setup and Run Guide
+
+### Prerequisites
+- **Python:** 3.11 or higher
+- **Node.js:** 18.x or higher and `npm`
+- **PostgreSQL:** 14 or higher (must support the `btree_gist` extension)
+
+---
+
+### Step-by-Step Setup
+
+#### 1. Create PostgreSQL Databases
+Connect to PostgreSQL via `psql` or your database manager and create two distinct databases:
+```sql
+CREATE DATABASE clinic_db;
+CREATE DATABASE clinic_test_db;
+```
+
+#### 2. Copy Environment Files
+From the project root:
+```bash
+# Copy root backend configuration
+cp .env.example .env
+```
+*(On Windows PowerShell: `Copy-Item .env.example .env`)*
+
+Configure your database credentials inside `.env`:
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/clinic_db
+TEST_DATABASE_URL=postgresql://postgres:password@localhost:5432/clinic_test_db
+JWT_SECRET=your-random-32-plus-character-secret-key-goes-here
+ENVIRONMENT=development
+CLINIC_TIMEZONE=Asia/Kolkata
+```
+
+#### 3. Backend Setup
+```bash
+# Create and activate Python virtual environment
+python -m venv venv
+
+# Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+# macOS/Linux:
+source venv/bin/activate
+
+# Install backend dependencies
+pip install -r backend/requirements.txt
+
+# Run Alembic migrations to create tables and GiST exclusion constraints
+cd backend
+alembic upgrade head
+
+# Seed the database with demo doctors, patients, rules, and appointments
+python -m app.seed
+
+# Start the FastAPI backend server
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+- Interactive Swagger API Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- API Health Status: [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+
+#### 4. Frontend Setup
+In a separate terminal:
+```bash
+cd frontend
+
+# Copy frontend environment variables
+cp .env.example .env
+
+# Install Node dependencies
+npm install
+
+# Start Vite development server
+npm run dev
+```
+The client application will start at [http://localhost:5173](http://localhost:5173).
+
+---
+
+## 3. Demo Logins Table
+
+All demo accounts use the standard password: `DemoPassword123!`
+
+### Doctors (12 Specialities)
+| Name | Email | Speciality | Slot Length | Weekly Working Windows |
 | :--- | :--- | :--- | :--- | :--- |
-| **DOCTOR** | Dr. Arvind Sharma | `dr.sharma@clinic.com` | General Physician (15-min slots, Mon–Sat 09:00–12:30 & 16:30–19:30) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Priya Nair | `dr.nair@clinic.com` | Dermatologist (30-min slots, Mon–Sat 10:00–13:00 & 17:00–20:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Rajesh Kothari | `dr.kothari@clinic.com` | Cardiologist (30-min slots, Mon–Sat 10:30–13:30 & 18:00–21:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Meera Desai | `dr.desai@clinic.com` | Pediatrician (15-min slots, Tue–Sun 09:30–13:00 & 16:00–19:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Rohan Mukherjee | `dr.mukherjee@clinic.com` | Orthopedic Surgeon (30-min slots, Mon–Fri 10:00–13:30 & 16:00–19:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Sunita Reddy | `dr.reddy@clinic.com` | Gynecologist (30-min slots, Mon–Sat 09:00–13:00 & 17:00–19:30) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Vikram Singhania | `dr.singhania@clinic.com` | Neurologist (30-min slots, Mon–Fri 11:00–14:00 & 17:30–20:30) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Ananya Sengupta | `dr.sengupta@clinic.com` | Psychiatrist (30-min slots, Tue–Sat 10:00–13:00 & 15:30–19:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Farhan Qureshi | `dr.qureshi@clinic.com` | ENT Specialist (15-min slots, Mon–Sat 09:30–13:00 & 16:30–19:30) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Kavita Joshi | `dr.joshi@clinic.com` | Ophthalmologist (15-min slots, Mon–Sat 10:00–13:30 & 17:00–20:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Amitav Banerjee | `dr.banerjee@clinic.com` | Gastroenterologist (30-min slots, Mon–Fri 10:00–14:00 & 18:00–21:00) | `DemoPassword123!` |
-| **DOCTOR** | Dr. Neha Kapoor | `dr.kapoor@clinic.com` | Pulmonologist (30-min slots, Mon–Sat 09:00–12:30 & 16:00–19:00) | `DemoPassword123!` |
-| **PATIENT** | Rohan Verma | `rohan.patient@example.com` | Patient with upcoming & past visits | `DemoPassword123!` |
-| **PATIENT** | Ananya Iyer | `ananya.patient@example.com` | Patient with upcoming visit | `DemoPassword123!` |
-| **PATIENT** | Vikram Patel | `vikram.patient@example.com` | New patient account | `DemoPassword123!` |
+| **Dr. Arvind Sharma** | `dr.sharma@clinic.com` | General Physician | 15 min | Mon–Sat: 09:00–12:30, 16:30–19:30 |
+| **Dr. Priya Nair** | `dr.nair@clinic.com` | Dermatologist | 30 min | Mon–Sat: 10:00–13:00, 17:00–20:00 |
+| **Dr. Rajesh Kothari** | `dr.kothari@clinic.com` | Cardiologist | 30 min | Mon–Sat: 10:30–13:30, 18:00–21:00 |
+| **Dr. Meera Desai** | `dr.desai@clinic.com` | Pediatrician | 15 min | Tue–Sun: 09:30–13:00, 16:00–19:00 |
+| **Dr. Rohan Mukherjee** | `dr.mukherjee@clinic.com` | Orthopedic Surgeon | 30 min | Mon–Fri: 10:00–13:30, 16:00–19:00 |
+| **Dr. Sunita Reddy** | `dr.reddy@clinic.com` | Gynecologist | 30 min | Mon–Sat: 09:00–13:00, 17:00–19:30 |
+| **Dr. Vikram Singhania** | `dr.singhania@clinic.com` | Neurologist | 30 min | Mon–Fri: 11:00–14:00, 17:30–20:30 |
+| **Dr. Ananya Sengupta** | `dr.sengupta@clinic.com` | Psychiatrist | 30 min | Tue–Sat: 10:00–13:00, 15:30–19:00 |
+| **Dr. Farhan Qureshi** | `dr.qureshi@clinic.com` | ENT Specialist | 15 min | Mon–Sat: 09:30–13:00, 16:30–19:30 |
+| **Dr. Kavita Joshi** | `dr.joshi@clinic.com` | Ophthalmologist | 15 min | Mon–Sat: 10:00–13:30, 17:00–20:00 |
+| **Dr. Amitav Banerjee** | `dr.banerjee@clinic.com` | Gastroenterologist | 30 min | Mon–Fri: 10:00–14:00, 18:00–21:00 |
+| **Dr. Neha Kapoor** | `dr.kapoor@clinic.com` | Pulmonologist | 30 min | Mon–Sat: 09:00–12:30, 16:00–19:00 |
 
-*(Patients can also self-register at any time from the web application's Register screen).*
+### Patients
+| Name | Email | Notes |
+| :--- | :--- | :--- |
+| **Rohan Verma** | `rohan.patient@example.com` | Patient with upcoming and past appointments |
+| **Ananya Iyer** | `ananya.patient@example.com` | Patient with active appointments |
+| **Vikram Patel** | `vikram.patient@example.com` | Patient with active appointments |
+
+*(New patients can also register dynamically from the web frontend).*
 
 ---
 
-## 📐 Data Model & Architecture Decisions
+## 4. Running Tests
+
+The test suite runs against a real PostgreSQL database to rigorously test GiST exclusion locks, concurrent booking requests, time zone boundaries, and atomic database rollbacks.
+
+### Safety Verification
+To prevent accidental data loss, the test runner enforces that `TEST_DATABASE_URL` is set and strictly distinct from `DATABASE_URL` and `DEV_DATABASE_URL`. If they match or if `TEST_DATABASE_URL` is not set, pytest will abort immediately.
+
+### Execute Pytest
+Ensure your test database exists (`createdb clinic_test_db`), then run:
+```bash
+# From project root:
+pytest backend/tests -v
+
+# Or on Windows using venv:
+.\venv\Scripts\pytest backend\tests -v
+```
+
+---
+
+## 5. Data Model
 
 ```mermaid
 erDiagram
     users ||--o| doctor_profiles : "1:1 profile"
-    users ||--o{ availability_rules : "has recurring windows"
-    users ||--o{ doctor_leaves : "blocks dates"
+    users ||--o{ availability_rules : "defines weekly windows"
+    users ||--o{ doctor_leaves : "blocks calendar days"
     users ||--o{ appointments : "participates (patient/doctor)"
     users ||--o{ reminders : "receives"
-    appointments ||--o{ reminders : "triggers"
+    appointments ||--o{ reminders : "linked to"
 
     users {
         int id PK
@@ -108,274 +227,110 @@ erDiagram
     }
 ```
 
-### 1. Dual PostgreSQL EXCLUDE Constraints (Zero Double-Booking)
-- **Doctor Overlap Guard:** We enable the PostgreSQL `btree_gist` extension and enforce an exclusion constraint on `(doctor_id, tstzrange(start_at, end_at))` for active statuses (`booked`, `completed`, `no_show`).
-  ```sql
-  ALTER TABLE appointments
-  ADD CONSTRAINT exclude_doctor_overlapping_appointments
-  EXCLUDE USING gist (
-      doctor_id WITH =,
-      tstzrange(start_at, end_at) WITH &&
-  )
-  WHERE (status IN ('booked', 'completed', 'no_show'));
+### Key Relations & Constraints
+1. **`users`:** Central identity table containing authentication credentials, personal contact info, and roles (`patient` or `doctor`).
+2. **`doctor_profiles`:** One-to-one extension of `users` for doctors, defining slot duration (`15` or `30` minutes), consultation fee, and professional credentials.
+3. **`availability_rules`:** Foreign key to `users(id)`. Defines recurring weekly operational windows per doctor by integer weekday (`0` = Monday to `6` = Sunday) and local times `[start_time, end_time)`.
+4. **`doctor_leaves`:** Foreign key to `users(id)`. Doctor-specific full-day leaves that completely suppress slot generation on specified calendar dates.
+5. **`appointments`:** Links `patient_id` and `doctor_id` with UTC `start_at` and `end_at` timestamps. Enforces dual PostgreSQL exclusion constraints on `(doctor_id, tstzrange)` and `(patient_id, tstzrange)` across active statuses (`booked`, `completed`, `no_show`).
+6. **`reminders`:** In-app notification records linking recipients (`user_id`) to `appointments(id)` with delivery (`remind_at`) and acknowledgement (`read_at`) timestamps.
+
+---
+
+## 6. Design Decisions
+
+### 1. UTC Timestamps & Clinic Timezone Math
+- **Storage:** All appointment start and end times are stored in UTC (`timestamptz`).
+- **Slot Math:** Weekday matching (`0` = Monday to `6` = Sunday), slot generation, and calendar day grouping are computed strictly within the clinic reference timezone (`Asia/Kolkata`) using Python 3.9+ `zoneinfo.ZoneInfo`. This eliminates day-shift bugs across UTC midnight boundaries.
+
+### 2. Dual PostgreSQL GiST Exclusion Constraints
+- Double-booking guarantees are enforced at the database storage engine layer using PostgreSQL `btree_gist` exclusion constraints:
+  - `exclude_doctor_overlapping_appointments`: Guarantees a doctor cannot have overlapping active appointments.
+  - `exclude_patient_overlapping_appointments`: Guarantees a patient cannot hold two concurrent appointments across different doctors.
+- Active appointment statuses (`booked`, `completed`, `no_show`) are protected; `cancelled` appointments release their time range instantly.
+- The service layer re-validates requested slots and cleanly maps database `IntegrityError` (and concurrent GiST lock resolutions) to HTTP `409 Conflict` with `SLOT_ALREADY_TAKEN`.
+
+### 3. Atomic Reschedule in a Single Transaction
+- Rescheduling cancels the current appointment and creates the new booking inside one atomic transaction.
+- Row-level locks (`SELECT ... FOR UPDATE`) protect against concurrent modifications.
+- If the new slot fails (e.g. taken concurrently or invalid), the entire transaction rolls back and the patient's existing appointment remains intact.
+
+### 4. 2-Hour Cancellation & Reschedule Cutoff
+- Server-side validation strictly prevents patients from cancelling or rescheduling an appointment within 2 hours of its start time (`CANCEL_CUTOFF_HOURS=2`).
+- The frontend surfaces countdown badges and disables action triggers with explanatory tooltips when the cutoff window has passed.
+
+### 5. On-Demand In-App Reminders
+- The in-app notification center evaluates upcoming appointments due within 1 hour dynamically via `/api/v1/reminders`.
+- Users receive real-time unread count badges and can mark alerts as read without background worker dependencies.
+
+### 6. Structured Error Architecture
+- The API standardizes all errors into structured JSON payloads:
+  ```json
+  {
+    "error": {
+      "code": "SLOT_ALREADY_TAKEN",
+      "message": "That slot was just taken. Please pick another.",
+      "status_code": 409
+    }
+  }
   ```
-- **Patient Overlap Guard:** To prevent a patient from accidentally or maliciously holding two overlapping consultations across different doctors simultaneously:
-  ```sql
-  ALTER TABLE appointments
-  ADD CONSTRAINT exclude_patient_overlapping_appointments
-  EXCLUDE USING gist (
-      patient_id WITH =,
-      tstzrange(start_at, end_at) WITH &&
-  )
-  WHERE (status IN ('booked', 'completed', 'no_show'));
-  ```
-- **Half-Open Intervals:** `tstzrange` treats intervals as `[start, end)`. Back-to-back slots (e.g. `10:00–10:30` and `10:30–11:00`) do not overlap, but concurrent requests for the identical slot raise an immediate Postgres `ExclusionViolation`.
-- **Integrity Handling:** The API catches SQLAlchemy `IntegrityError` and returns `409 Conflict` with `SLOT_ALREADY_TAKEN`. The frontend catches this code, automatically refreshes available slots, and alerts the patient.
-
-### 2. Clinic Timezone vs. UTC Storage
-- Timestamps in the database and JSON responses are strictly stored in UTC (`timestamptz`).
-- Weekdays (`0` = Monday to `6` = Sunday), slot slicing, and "today" calculations are performed in `CLINIC_TIMEZONE` (default `Asia/Kolkata`) using Python 3.9+ `zoneinfo.ZoneInfo`. This eliminates day-shift bugs across UTC midnight boundaries.
-- The frontend uses `Intl.DateTimeFormat` with `timeZone: 'Asia/Kolkata'` in `src/utils/dateUtils.js` and strictly avoids `toISOString().split('T')[0]`.
-
-### 3. Pure On-The-Fly Slot Generator
-- Slots are generated on the fly by a pure function:
-  `generate_slots_for_date(date, windows, slot_minutes, booked_intervals, is_on_leave, now_utc, buffer_minutes)`
-- Partial trailing slots (e.g. 10:00–10:40 with 30m slots -> only 10:00–10:30) are dropped.
-- Slots with `start_at <= now` are never returned.
-- Blocked leave days return zero slots.
-- Cancelled appointments automatically free their slot for booking.
-- On booking, the server re-validates that the requested `start_at` matches an exact free slot generated on the fly (never trusting client parameters).
-
-### 4. Atomic Rescheduling & State Transitions
-- Rescheduling cancels the old appointment and books the new slot in a **single database transaction** with `SELECT ... FOR UPDATE` row locks. If the new slot fails (e.g. taken concurrently), the transaction rolls back cleanly, keeping the old appointment intact.
-- Both cancellation and rescheduling are blocked within 2 hours of the appointment start (`CANCEL_CUTOFF_HOURS=2`).
-- Doctor status transitions (`completed`, `no_show`) are restricted to the appointment's doctor, require `status == 'booked'`, and can only be invoked after the appointment start time has passed.
-
-### 5. In-App Notifications & Background Reminders
-- **In-App Bell:** The `/api/v1/reminders` endpoint calculates due reminders within 1 hour on-demand. The frontend polls this endpoint every 60 seconds with an unread badge and mark-as-read action.
-- **Idempotent CLI Reminders:** `python -m app.send_reminders` can be run periodically via Windows Task Scheduler or cron. It queries appointments starting in `[now, now + 1h]` where `email_reminder_sent_at IS NULL`, delivers email via SMTP when `EMAIL_REMINDERS_ENABLED=true`, records the sent timestamp in the database, and exits with code 0 without crashing if SMTP is disabled or unconfigured.
+- Validation errors and business rule violations return predictable, human-readable explanations that the frontend directly handles.
 
 ---
 
-## 🚀 Setup & Execution Guide
+## 7. Project Status & Roadmap
 
-### Prerequisites
-- Python 3.11+
-- Node.js 18+ and npm
-- PostgreSQL 14+ (or Render PostgreSQL internal/external URL)
+### What is Finished
+- Full patient workflow: doctor browsing, filtering by speciality, live slot availability, booking, rescheduling, and cancellation.
+- Full doctor workflow: today's schedule view in chronological order, appointment status transitions (`completed`, `no_show`), weekly recurring availability rule editor, and single-day leave management.
+- Guarded schedule updates: modifying doctor availability checks future booked appointments and rejects changes with `409 Conflict` if existing bookings would be orphaned or misaligned.
+- Zero double-booking concurrency protection verified with multi-threaded tests.
+- Full responsive design supporting viewports down to 375px.
 
----
+### What is Not Included
+- **Third-Party SMS/WhatsApp Delivery:** Notification delivery is supported via in-app alerts and SMTP email; direct SMS/WhatsApp API gateways (e.g. Twilio) are not integrated.
+- **Payment Processing Gateway:** Profile fees are displayed and recorded, but digital payment checkout (Stripe/Razorpay) is omitted.
 
-### Step 1: Clone & Configure Environment
-
-1. Copy `.env.example` to `.env` at the project root:
-   ```powershell
-   # Windows (PowerShell)
-   Copy-Item .env.example .env
-   ```
-   ```bash
-   # macOS / Linux
-   cp .env.example .env
-   ```
-
-2. Note on Database URL:
-   - For Render internal links: they resolve inside Render's internal network. For local development outside Render, set `DEV_DATABASE_URL` and `TEST_DATABASE_URL` pointing to your local PostgreSQL instance (with `btree_gist` extension available).
-   - Backend auto-normalizes connection strings to `postgresql+psycopg://`.
+### What I Would Do With More Time
+- **WebSockets / Server-Sent Events (SSE):** Push instant slot state updates to all active client browsers viewing the same doctor's calendar.
+- **Calendar Subscriptions (iCal / Google Calendar):** One-click calendar synchronization for patients and doctors.
+- **Bi-Weekly / Custom Shift Rotations:** Flexible scheduling patterns such as alternating weekend shifts.
 
 ---
 
-### Step 2: Backend Setup (Windows PowerShell & macOS/Linux)
+## 8. Stretch Features
 
-#### Windows (PowerShell):
-```powershell
-# 1. Activate the existing root virtual environment
-.\venv\Scripts\Activate.ps1
+1. **Doctor Leave Days:**
+   - Doctors can block full calendar days off via `/api/v1/doctor/leaves`.
+   - The slot generator automatically suppresses all time slots on blocked leave dates.
+   - Guarded rejection: doctors cannot block a leave day if appointments are already booked on that date unless those bookings are resolved first.
 
-# 2. Install pinned dependencies
-pip install -r backend\requirements.txt
+2. **In-App Reminders (1 Hour Prior):**
+   - Active appointments starting within the next 60 minutes trigger in-app notification alerts.
+   - Bell notification menu displays unread badge counts and provides one-click mark-as-read functionality.
 
-# 3. Run database migrations to the latest revision
-cd backend
-alembic upgrade head
-
-# 4. Seed the database (idempotent, safe)
-python -m app.seed
-
-# 5. Start the FastAPI development server
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-#### macOS / Linux:
-```bash
-# 1. Activate root virtual environment
-source venv/bin/activate
-
-# 2. Install pinned dependencies
-pip install -r backend/requirements.txt
-
-# 3. Run database migrations
-cd backend
-alembic upgrade head
-
-# 4. Seed the database
-python -m app.seed
-
-# 5. Start the FastAPI development server
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-The API server will run at `http://127.0.0.1:8000`. Swagger documentation is available at `http://127.0.0.1:8000/docs`.
+3. **Optional Email Reminders CLI (`python -m app.send_reminders`):**
+   - Background worker designed for scheduled cron or task execution.
+   - Scans for appointments starting within `[now, now + 1h]` that have not yet received an email reminder.
+   - Sends email reminders when `EMAIL_REMINDERS_ENABLED=true` via configured SMTP settings; defaults to `false` and exits cleanly with exit code 0 when disabled.
 
 ---
 
-### Step 3: Frontend Setup
+## 9. AI Tools Used
 
-Open a second terminal:
-
-#### Windows (PowerShell):
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-#### macOS / Linux:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The web application is live at `http://localhost:5173`.
+<FILL IN: tools used and what for>
 
 ---
 
-### Step 4: Run Tests
+## 10. Live Demo Link
 
-The test suite runs **strictly against `TEST_DATABASE_URL`** (refusing execution if it equals the production `DATABASE_URL` to protect live data). It tests real PostgreSQL exclusion constraints, concurrent threads, time travel, and role access:
-
-#### Windows (PowerShell):
-```powershell
-# From project root:
-.\venv\Scripts\pytest backend\tests -v
-```
-
-#### macOS / Linux:
-```bash
-source venv/bin/activate
-pytest backend/tests -v
-```
-
-All 27 test cases pass with 100% clean assertions.
+<optional: add deployed URL>
 
 ---
 
-### Step 5: Send Reminders Script (CLI)
-
-To test the background reminder dispatch command:
-```powershell
-# Windows (PowerShell)
-cd backend
-..\venv\Scripts\python.exe -m app.send_reminders
-```
-```bash
-# macOS / Linux
-cd backend
-python -m app.send_reminders
-```
-
----
-
-### Step 6: Production Deployment (Render)
-
-When deploying the backend web service to **Render**, configure the service settings as follows (or use the provided [`render.yaml`](file:///d:/Booking_System/render.yaml) Blueprint):
-
-* **Root Directory:** `backend`
-* **Build Command:** `pip install -r requirements.txt`
-* **Start Command:**
-  ```bash
-  alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-  ```
-  *(Running `alembic upgrade head` before `uvicorn` guarantees that all migrations, including missing columns such as `email_reminder_sent_at`, are applied automatically before accepting incoming traffic).*
-* **Environment Variables:**
-  * `DATABASE_URL`: PostgreSQL connection string (e.g. from Render PostgreSQL).
-  * `ALLOWED_ORIGINS`: Comma-separated allowed frontend origins (e.g. `https://clinic-appointment-booking-ten.vercel.app,http://localhost:5173`).
-  * `CLINIC_TIMEZONE`: `Asia/Kolkata`
-  * `JWT_SECRET`: Random 64-character secret string.
-
----
-
-## 📡 API Overview Summary Table
-
-All endpoints are versioned under `/api/v1`:
-
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/health` | Public | Health check & timezone status |
-| `POST` | `/api/v1/auth/register` | Public | Patient registration with rate limiting |
-| `POST` | `/api/v1/auth/login` | Public | JWT login with rate limiting |
-| `GET` | `/api/v1/auth/me` | Authenticated | Retrieve current user profile & role |
-| `GET` | `/api/v1/doctors` | Public / Auth | List doctors (search, speciality, next available slot) |
-| `GET` | `/api/v1/doctors/{id}` | Public / Auth | Doctor profile, weekly rules & consultation fee |
-| `GET` | `/api/v1/doctors/{id}/slots` | Public / Auth | Free on-the-fly generated slots on `?date=YYYY-MM-DD` |
-| `POST` | `/api/v1/appointments` | Patient | Book appointment (re-validates slot on the fly) |
-| `GET` | `/api/v1/appointments?scope=upcoming\|past` | Patient | Patient's consultations with badges & cutoff flags |
-| `POST` | `/api/v1/appointments/{id}/cancel` | Patient | Cancel appointment (rejected within 2 hours) |
-| `POST` | `/api/v1/appointments/{id}/reschedule` | Patient | Atomic reschedule (old kept intact if new slot fails) |
-| `GET` | `/api/v1/doctor/availability` | Doctor | Doctor's recurring weekly availability windows |
-| `PUT` | `/api/v1/doctor/availability` | Doctor | Update weekly windows & slot length (15/30 min) |
-| `GET` | `/api/v1/doctor/leaves` | Doctor | List doctor's blocked leave dates |
-| `POST` | `/api/v1/doctor/leaves` | Doctor | Block single day off (rejected with 409 if booked appts exist) |
-| `DELETE` | `/api/v1/doctor/leaves/{id}` | Doctor | Unblock day off and restore availability |
-| `GET` | `/api/v1/doctor/appointments/today` | Doctor | Today's appointments in time order |
-| `GET` | `/api/v1/doctor/appointments?date=` | Doctor | Schedule for a specific date |
-| `PATCH` | `/api/v1/doctor/appointments/{id}/status` | Doctor | Mark appointment as `completed` or `no_show` |
-| `GET` | `/api/v1/reminders` | Authenticated | In-app reminders due within 1 hour |
-| `POST` | `/api/v1/reminders/{id}/read` | Authenticated | Mark reminder notification as read |
-
----
-
-## 🎨 Design & Aesthetic Features
-
-- **Palette:** Modern clinical aesthetic with calm teal primary (`#0d9488`), dark teal accents (`#115e59`), neutral slate backgrounds (`#f8fafc`), and WCAG AA contrast.
-- **Typography:** Modern Google Fonts Inter paired with monospace indicators for IDs, dates, and badges.
-- **Responsive Navigation:** Desktop navbar with animated Framer Motion layout pill transitions; sticky mobile bottom navigation for viewports `< 640px` with touch targets $\ge 44\text{px}$.
-- **Smart Date Math:** Fully timezone-aware date pickers and day offsets formatted through `Intl.DateTimeFormat`.
-- **User Experience:** Instant skeleton loading states, toasts for API errors, explicit 2-hour cutoff indicators with disabled buttons and tooltip explanations, and split morning/afternoon/evening slot cards.
-
----
-
-## 📋 What is Finished, What is Not, and Future Improvements
-
-### ✅ What is Finished & Verified (100% Requirements)
-1. **Zero Double Booking:** PostgreSQL `EXCLUDE USING gist` constraints on both `doctor_id` and `patient_id` with `tstzrange(start_at, end_at)` for active statuses.
-2. **Pure Slot Generator:** Deterministic slot slicing with dropped partial slots, past slot suppression, 60-day booking window, and leave day masking.
-3. **Atomic Reschedule:** Old appointment cancelled and new appointment booked in a single database transaction with `FOR UPDATE` row locks.
-4. **2-Hour Cutoff Rule:** Server-side block on cancellation and rescheduling within 2 hours (`CANCEL_CUTOFF_HOURS=2`).
-5. **Doctor Workflow:** Today's schedule in time order, status transitions (`completed`, `no_show`) only after start time, weekly availability editor (15/30 min, multiple windows, overlap rejection), and single day leave blocks.
-6. **Reminders:** Dual system featuring on-demand in-app reminder polling (`/api/v1/reminders`) and idempotent CLI runner (`python -m app.send_reminders`).
-7. **27 Passing Pytest Tests:** Concurrency threads, patient overlaps, freeze time boundaries, leave day slot elimination, 15 vs 30 min slicing, atomic reschedule, role security, and reminder boundaries.
-8. **Security & Secrets:** Root `.env` protected, `.gitignore` strictly enforced, passwords and real URLs excluded from repo and commits, ruff clean.
-
-### ⏳ What is Not Included
-- **Third-Party SMS/WhatsApp Notifications:** In-app notifications and SMTP email delivery are fully supported; external SMS gateways (e.g. Twilio) were not part of the initial specification.
-- **Online Payment Gateway:** Consultation fees are tracked in profiles, but credit card gateway checkout (Stripe/Razorpay) was not required.
-
-### 🔮 What I Would Do With More Time
-- **WebSockets / Server-Sent Events:** Live broadcast of newly booked slots to other active browsers looking at the same calendar date.
-- **Bi-weekly / Alternating Schedules:** Support alternating week schedules (e.g. 1st and 3rd Saturdays off).
-- **Calendar Synchronization:** Direct sync with Google Calendar and Apple Calendar via WebCal feeds.
-
----
-
-## 🤖 AI Disclosure & Usage
-
-- **AI Tools Used:** Google Gemini via Antigravity IDE assistant.
-- **What AI Assisted With:**
-  - Synthesizing PostgreSQL `btree_gist` exclusion constraints with Alembic migrations.
-  - Multi-threaded concurrency test harness design using Python's `concurrent.futures`.
-  - Frontend scaffolding with Vite, React Router, and Framer Motion micro-interactions.
-- **What Was Human-Engineered & Verified:**
-  - Verification of timezone conversions between UTC storage and `Asia/Kolkata` clinic calendar days.
-  - Deterministic slot slicing algorithm edge cases (partial slot truncation, boundary tests).
-  - Strict security audits ensuring zero credential leakage in logs or tracked files.
+## 11. Responsive Design Note
+The web client is fully responsive and optimized for mobile devices down to 375px viewport widths:
+- Fluid layouts with zero horizontal scrollbars on mobile viewports.
+- Minimum 44px touch targets on buttons and interactive controls.
+- Modal dialogs fitted dynamically within viewport height with internal scroll.
+- Responsive mobile navigation with accessible dropdown menus and wrapping action button rows.

@@ -268,6 +268,7 @@ def update_doctor_schedule_and_profile(
     db: Session,
     doctor_id: int,
     payload: UpdateDoctorAvailabilityRequest,
+    now_utc: datetime | None = None,
 ) -> None:
     """Update doctor slot duration and weekly availability windows."""
     user = db.scalar(select(User).where(User.id == doctor_id, User.role == UserRole.DOCTOR.value))
@@ -284,6 +285,75 @@ def update_doctor_schedule_and_profile(
     for day_schedule in payload.schedule:
         windows = [TimeWindow(w.start_time, w.end_time) for w in day_schedule.windows]
         validate_no_overlapping_windows(windows)
+
+    # Check future booked appointments against new schedule
+    if now_utc is None:
+        now_utc = datetime.now(timezone.utc)
+
+    future_booked_appts = db.scalars(
+        select(Appointment)
+        .where(
+            Appointment.doctor_id == doctor_id,
+            Appointment.status == AppointmentStatus.BOOKED.value,
+            Appointment.start_at >= now_utc,
+        )
+        .order_by(Appointment.start_at.asc())
+    ).all()
+
+    new_schedule_by_weekday: dict[int, list[TimeWindow]] = {}
+    for day_schedule in payload.schedule:
+        new_schedule_by_weekday[day_schedule.weekday] = [
+            TimeWindow(w.start_time, w.end_time) for w in day_schedule.windows
+        ]
+
+    conflicting_appts: list[Appointment] = []
+    for appt in future_booked_appts:
+        # Check slot duration alignment
+        appt_duration = appt.end_at - appt.start_at
+        if appt_duration != timedelta(minutes=payload.slot_minutes):
+            conflicting_appts.append(appt)
+            continue
+
+        local_start = appt.start_at.astimezone(settings.tz)
+        local_end = appt.end_at.astimezone(settings.tz)
+        appt_weekday = local_start.weekday()
+        appt_date = local_start.date()
+
+        windows = new_schedule_by_weekday.get(appt_weekday, [])
+        is_aligned = any(
+            w.start_time <= local_start.time()
+            and local_end.time() <= w.end_time
+            and (
+                datetime.combine(appt_date, local_start.time()) - datetime.combine(appt_date, w.start_time)
+            ).total_seconds()
+            % (payload.slot_minutes * 60)
+            == 0
+            for w in windows
+        )
+
+        if not is_aligned:
+            conflicting_appts.append(appt)
+
+    if conflicting_appts:
+        conflicting_dates: list[str] = []
+        for appt in conflicting_appts:
+            d_str = appt.start_at.astimezone(settings.tz).strftime("%Y-%m-%d")
+            if d_str not in conflicting_dates:
+                conflicting_dates.append(d_str)
+
+        dates_preview = ", ".join(conflicting_dates[:3])
+        if len(conflicting_dates) > 3:
+            dates_preview += f" (and {len(conflicting_dates) - 3} more)"
+
+        raise AppError(
+            status_code=409,
+            code="AVAILABILITY_CONFLICTS_WITH_BOOKINGS",
+            message=(
+                f"Cannot update availability: {len(conflicting_appts)} future booked "
+                f"appointment(s) conflict with the new schedule on {dates_preview}. "
+                f"Please reschedule or cancel these appointments before modifying availability."
+            ),
+        )
 
     # Update profile fields
     profile.slot_minutes = payload.slot_minutes

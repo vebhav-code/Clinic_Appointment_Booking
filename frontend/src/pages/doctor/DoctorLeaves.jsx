@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Trash2, Plus, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api, ApiError } from '../../api/client';
 import { useToast } from '../../context/ToastContext';
-import { getTodayClinicDate } from '../../utils/dateUtils';
+import { getTodayClinicDate, formatClinicFullDate } from '../../utils/dateUtils';
 
 export default function DoctorLeaves() {
   const [leaves, setLeaves] = useState([]);
@@ -206,7 +206,7 @@ export default function DoctorLeaves() {
                   >
                     <div>
                       <div className="mono" style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-                        {leave.date}
+                        {formatClinicFullDate(leave.date)}
                       </div>
                       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                         {leave.reason || 'Personal / General Leave'}
@@ -218,9 +218,9 @@ export default function DoctorLeaves() {
                       className="btn-danger"
                       onClick={() => handleUnblockDate(leave.date)}
                       title="Unblock this day"
-                      style={{ fontSize: '0.75rem', minHeight: '34px', padding: '0.25rem 0.65rem' }}
+                      style={{ fontSize: '0.8rem', minHeight: '44px', padding: '0.4rem 0.85rem' }}
                     >
-                      <Trash2 size={13} /> Unblock
+                      <Trash2 size={15} /> Unblock
                     </button>
                   </div>
                 ))}

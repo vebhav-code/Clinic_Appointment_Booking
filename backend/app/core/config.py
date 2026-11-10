@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Resolve absolute path to the root Booking_System/.env file regardless of CWD
@@ -13,6 +13,8 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_DIR = BACKEND_DIR.parent
 ROOT_ENV_FILE = ROOT_DIR / ".env"
 BACKEND_ENV_FILE = BACKEND_DIR / ".env"
+
+DEFAULT_DEV_JWT_SECRET = "development_super_secret_jwt_key_must_be_overridden_in_prod_123456"
 
 
 def normalize_database_url(url: str) -> str:
@@ -56,10 +58,16 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Core Database
+    # Environment
+    ENVIRONMENT: str = Field(
+        default="development",
+        description="Application environment: 'development', 'test', or 'production'",
+    )
+
+    # Core Database (default is local-dev-only; override via DATABASE_URL in production)
     DATABASE_URL: str = Field(
-        default="postgresql://postgres:password@localhost:5432/clinic_booking",
-        description="Main PostgreSQL connection URL",
+        default="postgresql://postgres:password@localhost:5432/clinic_booking",  # local-dev-only
+        description="Main PostgreSQL connection URL (local-dev-only default; configure via DATABASE_URL in production)",
     )
     TEST_DATABASE_URL: str | None = Field(
         default=None,
@@ -72,7 +80,7 @@ class Settings(BaseSettings):
 
     # Security & Auth
     JWT_SECRET: str = Field(
-        default="development_super_secret_jwt_key_must_be_overridden_in_prod_123456",
+        default=DEFAULT_DEV_JWT_SECRET,
         min_length=16,
         description="Secret key for JWT token encoding/decoding",
     )
@@ -142,6 +150,17 @@ class Settings(BaseSettings):
         except ZoneInfoNotFoundError as err:
             raise ValueError(f"Invalid timezone: {v}. Must be a valid IANA timezone string.") from err
         return v
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        env = (self.ENVIRONMENT or "").strip().lower()
+        if env == "production":
+            if self.JWT_SECRET == DEFAULT_DEV_JWT_SECRET or len(self.JWT_SECRET) < 32:
+                raise ValueError(
+                    "Production safety violation: When ENVIRONMENT is 'production', "
+                    "JWT_SECRET cannot be the built-in default and must be at least 32 characters long."
+                )
+        return self
 
     @property
     def sync_database_url(self) -> str:

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Search, Filter, Clock, IndianRupee, ArrowRight, UserCheck } from 'lucide-react';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import { getClinicDateChipParts } from '../utils/dateUtils';
 
 const SPECIALITIES = [
   'All',
@@ -293,7 +294,7 @@ export default function DoctorsList() {
                             display: 'inline-block',
                           }}
                         />
-                        Next: {new Date(doc.next_available_slot.start_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {doc.next_available_slot.local_start}
+                        Next: {getClinicDateChipParts(doc.next_available_slot.start_at).date} at {doc.next_available_slot.local_start}
                       </span>
                     ) : (
                       <span

@@ -16,6 +16,7 @@ from app.core.security import get_password_hash
 from app.models.appointment import Appointment, AppointmentStatus
 from app.models.doctor import AvailabilityRule, DoctorLeave, DoctorProfile
 from app.models.user import User, UserRole
+from app.services.doctor_service import get_doctor_slots_for_date
 
 DEMO_PASSWORD = "DemoPassword123!"
 
@@ -440,22 +441,46 @@ def seed_database(db: Session, force_production: bool = False) -> None:
             )
         )
 
-    # Appointment 4: ONE TODAY (Vikram with Dr. Sharma at 17:00 IST today)
-    today_local = datetime.combine(today, time(17, 0), tzinfo=settings.tz)
-    today_utc = today_local.astimezone(timezone.utc)
-    if not db.scalar(
-        select(Appointment).where(Appointment.doctor_id == dr_sharma.id, Appointment.start_at == today_utc)
-    ):
-        db.add(
-            Appointment(
-                patient_id=vikram.id,
-                doctor_id=dr_sharma.id,
-                start_at=today_utc,
-                end_at=today_utc + timedelta(minutes=15),
-                status=AppointmentStatus.BOOKED.value,
-                reason="Follow-up on seasonal fever and prescription renewal",
-            )
+    # Appointment 4: Next available free slot later today (or tomorrow if none remains)
+    now_utc = datetime.now(timezone.utc)
+    existing_future_vikram = db.scalar(
+        select(Appointment).where(
+            Appointment.patient_id == vikram.id,
+            Appointment.doctor_id == dr_sharma.id,
+            Appointment.status == AppointmentStatus.BOOKED.value,
+            Appointment.start_at >= now_utc,
         )
+    )
+    if not existing_future_vikram:
+        # Check free slots later today
+        slots_resp_today = get_doctor_slots_for_date(db, dr_sharma.id, today, now_utc=now_utc)
+        target_slot = None
+        if slots_resp_today.slots:
+            target_slot = slots_resp_today.slots[0]
+        else:
+            # If no free slot remains today, pick first free slot tomorrow
+            slots_resp_tomorrow = get_doctor_slots_for_date(db, dr_sharma.id, tomorrow, now_utc=now_utc)
+            if slots_resp_tomorrow.slots:
+                target_slot = slots_resp_tomorrow.slots[0]
+
+        if target_slot:
+            already_booked = db.scalar(
+                select(Appointment).where(
+                    Appointment.doctor_id == dr_sharma.id,
+                    Appointment.start_at == target_slot.start_at,
+                )
+            )
+            if not already_booked:
+                db.add(
+                    Appointment(
+                        patient_id=vikram.id,
+                        doctor_id=dr_sharma.id,
+                        start_at=target_slot.start_at,
+                        end_at=target_slot.end_at,
+                        status=AppointmentStatus.BOOKED.value,
+                        reason="Follow-up on seasonal fever and prescription renewal",
+                    )
+                )
 
     # Appointment 5: Upcoming tomorrow (Rohan with Dr. Sharma at 10:00 IST)
     up1_local = datetime.combine(tomorrow, time(10, 0), tzinfo=settings.tz)

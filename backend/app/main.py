@@ -14,6 +14,12 @@ from app.routers import appointments, auth, doctor_management, doctors, profile,
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan context for startup and shutdown events."""
+    if (settings.ENVIRONMENT or "").strip().lower() == "production":
+        from app.core.config import DEFAULT_DEV_JWT_SECRET
+        if settings.JWT_SECRET == DEFAULT_DEV_JWT_SECRET or len(settings.JWT_SECRET) < 32:
+            raise RuntimeError(
+                "Production startup failed: JWT_SECRET must be at least 32 characters and not use the default value."
+            )
     yield
 
 

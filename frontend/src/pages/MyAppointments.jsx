@@ -115,27 +115,9 @@ export default function MyAppointments() {
     }
   };
 
-  // Format local date / time strings
-  const formatTime = (isoString) => {
-    if (!isoString) return '';
-    const d = new Date(isoString);
-    return d.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
-
-  const formatDate = (isoString) => {
-    if (!isoString) return '';
-    const d = new Date(isoString);
-    return d.toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+  // Format date / time strings using clinic timezone
+  const formatTime = (isoString) => formatClinicTime(isoString);
+  const formatDate = (isoString) => formatClinicFullDate(isoString);
 
   return (
     <div style={{ padding: '2.5rem 0 5rem', minHeight: 'calc(100vh - 64px)' }}>
@@ -324,13 +306,13 @@ export default function MyAppointments() {
                     )}
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         className="btn-outline"
                         disabled={!appt.can_cancel_or_reschedule}
                         onClick={() => openRescheduleModal(appt)}
-                        style={{ fontSize: '0.8rem', minHeight: '36px', padding: '0.3rem 0.8rem' }}
+                        style={{ fontSize: '0.82rem', minHeight: '44px', padding: '0.4rem 0.9rem' }}
                       >
                         <RotateCcw size={14} /> Reschedule
                       </button>
@@ -339,7 +321,7 @@ export default function MyAppointments() {
                         className="btn-danger"
                         disabled={!appt.can_cancel_or_reschedule}
                         onClick={() => setCancellingAppt(appt)}
-                        style={{ fontSize: '0.8rem', minHeight: '36px', padding: '0.3rem 0.8rem' }}
+                        style={{ fontSize: '0.82rem', minHeight: '44px', padding: '0.4rem 0.9rem' }}
                       >
                         <XCircle size={14} /> Cancel
                       </button>
@@ -429,11 +411,13 @@ export default function MyAppointments() {
               style={{
                 width: '100%',
                 maxWidth: '460px',
+                maxHeight: 'calc(100vh - 2rem)',
+                overflowY: 'auto',
                 background: '#ffffff',
                 backgroundColor: '#ffffff',
                 borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-default)',
-                padding: '2rem',
+                padding: '1.75rem',
                 boxShadow: 'var(--shadow-modal)',
               }}
             >
@@ -447,12 +431,13 @@ export default function MyAppointments() {
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
                 This slot will be immediately freed up for other patients.
               </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className="btn-outline"
                   onClick={() => setCancellingAppt(null)}
                   disabled={submittingCancel}
+                  style={{ minHeight: '44px' }}
                 >
                   Keep Appointment
                 </button>
@@ -461,6 +446,7 @@ export default function MyAppointments() {
                   className="btn-danger"
                   onClick={handleConfirmCancel}
                   disabled={submittingCancel}
+                  style={{ minHeight: '44px' }}
                 >
                   {submittingCancel ? 'Cancelling...' : 'Confirm Cancellation'}
                 </button>
@@ -592,9 +578,9 @@ export default function MyAppointments() {
                           onClick={() => setSelectedNewSlot(slot)}
                           className={isSelected ? 'btn-primary' : 'btn-outline'}
                           style={{
-                            fontSize: '0.8rem',
-                            minHeight: '38px',
-                            padding: '0.3rem',
+                            fontSize: '0.85rem',
+                            minHeight: '44px',
+                            padding: '0.4rem',
                           }}
                         >
                           <span className="mono">{slot.local_start}</span>
@@ -606,12 +592,13 @@ export default function MyAppointments() {
               </div>
 
               {/* Modal Actions */}
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   className="btn-outline"
                   onClick={() => setReschedulingAppt(null)}
                   disabled={submittingReschedule}
+                  style={{ minHeight: '44px' }}
                 >
                   Cancel
                 </button>
@@ -620,6 +607,7 @@ export default function MyAppointments() {
                   className="btn-primary"
                   onClick={handleConfirmReschedule}
                   disabled={!selectedNewSlot || submittingReschedule}
+                  style={{ minHeight: '44px' }}
                 >
                   {submittingReschedule ? 'Rescheduling...' : 'Confirm Reschedule'}
                 </button>
